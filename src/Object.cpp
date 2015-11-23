@@ -20,6 +20,8 @@ Mesh3d Object::init(const aiMesh *t_mesh) {
     boost::tie(vertexNormals, created) = mesh.add_property_map<Mesh3d::Vertex_index,Vector3d>("v:normal");
     Mesh3d::Property_map<Mesh3d::Face_index,Vector3d> faceNormals;
     boost::tie(faceNormals, created) = mesh.add_property_map<Mesh3d::Face_index,Vector3d>("f:normal");
+    Mesh3d::Property_map<Mesh3d::Face_index,double> faceAreas;
+    boost::tie(faceAreas, created) = mesh.add_property_map<Mesh3d::Face_index,double>("f:area");
 
     std::vector<Mesh3d::Vertex_index> vertexIdxes;
     std::vector<Point3d> points;
@@ -38,6 +40,8 @@ Mesh3d Object::init(const aiMesh *t_mesh) {
 
     assert(vertexIdxes.size()==t_mesh->mNumVertices);
 
+    surfaceArea = 0;
+
     for (int f = 0; f < t_mesh->mNumFaces; ++f)
     {
         std::vector<Mesh3d::Vertex_index> faceVertIdxes;
@@ -51,6 +55,8 @@ Mesh3d Object::init(const aiMesh *t_mesh) {
         else
             f_id = mesh.add_face(faceVertIdxes[0],faceVertIdxes[1],faceVertIdxes[2],faceVertIdxes[3]);
         faceNormals[f_id] = calculateFaceNormal(f_id);
+        faceAreas[f_id] = calculateFaceArea(f_id, faceNormals[f_id]);
+        surfaceArea += faceAreas[f_id];
     }
 
     return mesh;
@@ -105,4 +111,33 @@ Vector3d Object::calculateFaceNormal(const Mesh3d::Face_index &face) const {
     if(dot < 0.0)
         return (-1*faceNormal);
     return (faceNormal);
+}
+
+double Object::calculateFaceArea(const Mesh3d::Face_index &face, const Vector3d &faceNormal) const {
+    Mesh3d::Property_map<Mesh3d::Vertex_index,Point3d> points = m_mesh.points();
+    std::vector<Mesh3d::Vertex_index> vertices = getVerticesOfFace(face);
+    Vector3d normal(faceNormal);
+    if(vertices.size() < 3) return 0;
+
+    // For testing purposes
+    // vertices = std::vector<Vertex>({Vertex(Eigen::Vector3d(0,0,0),Eigen::Vector3d(0,0,1)),Vertex(Eigen::Vector3d(0,1,0),Eigen::Vector3d(0,0,1)),Vertex(Eigen::Vector3d(1,2,0),Eigen::Vector3d(0,0,1)),Vertex(Eigen::Vector3d(1,1,0),Eigen::Vector3d(0,0,1))});
+    // normal = Eigen::Vector3d(0,0,1);
+
+    Vector3d total(0,0,0);
+    for (int i = 0; i < vertices.size(); i++)
+    {
+        int a = i;
+        int b = (i+1) % vertices.size();
+
+        Point3d pa = points[vertices[a]];
+        Point3d pb = points[vertices[b]];
+
+        Vector3d va = Vector3d(pa.x(),pa.y(),pa.z());
+        Vector3d vb = Vector3d(pb.x(),pb.y(),pb.z());
+
+        total += CGAL::cross_product(va,vb);
+    }
+
+    normal = normal / normal.squared_dist();
+    return std::abs(normal * total)/2.0;
 }

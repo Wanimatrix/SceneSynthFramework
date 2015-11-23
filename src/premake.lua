@@ -38,6 +38,9 @@ solution "SceneSynthesisFramework"
          libdirs (qhulldir .. "/lib")
          links ("qhullcpp")
 
+         -- CGAL -- 
+         links ("CGAL")
+
       configuration "windows"
          links ("assimp.dll")
          postbuildcommands {"cp " .. assimpdir .. "/bin/cygassimp-3.dll ../bin", "make"}

@@ -30,6 +30,7 @@ public:
     virtual Vector3d getVertexNormal(const Mesh3d::Vertex_index &v_id) const;
     virtual Vector3d getFaceNormal(const Mesh3d::Face_index &f_id) const;
     virtual std::vector<Mesh3d::Vertex_index> getVerticesOfFace(const Mesh3d::Face_index &face) const;
+    virtual double getSurfaceArea() const {return surfaceArea;}
 
 private:
     virtual Mesh3d init(const aiMesh *t_mesh);
@@ -43,4 +44,5 @@ private:
     const Mesh3d m_mesh;
     const aiMatrix4x4 m_transformation;
     Bbox3d m_bbox;
+    double surfaceArea;
 };
