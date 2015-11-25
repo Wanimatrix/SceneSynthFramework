@@ -1,18 +1,23 @@
+/**
+This code comes from this paper:
+
+Hu, Ruizhen, et al. "Interaction Context (ICON): Towards a Geometric Functionality Descriptor." ACM Transactions on Graphics 34.
+*/
+
 #pragma once
 
-#include "Object.h"
-
-using namespace std;
+#include "../types.h"
 
 // Helper structures
 struct SamplePoint{
-	Vector3d pos, n;			// position and normal
+	Point3d pos;
+    Vector3d n;			// position and normal
 	double weight;
 	double u,v;
 	int findex;						// index of sampled face
 	int flag;
 
-	SamplePoint(const Vector3d& position = Vector3d(), const Vector3d& normal = Vector3d(), 
+	SamplePoint(const Point3d& position = Point3d(), const Vector3d& normal = Vector3d(), 
 		double Weight = 0.0, int face_index = -1.0, double U = 0.0, double V = 0.0, int flags = 0)
 	{
 		pos = position;
@@ -27,9 +32,9 @@ struct SamplePoint{
 
 struct WeightFace{
 	double weight;
-	Mesh3d::Face_vertex f;
+	Face f;
 
-    WeightFace(double a, Mesh3d::Face_vertex face) : weight(a), f(face){}
+    WeightFace(double a = 0.0, Face face = Face(-1)) : weight(a), f(face){}
 
 	bool operator< (const WeightFace & af) const { return weight < af.weight; }
 	void setValue (double val) { weight = val; }
@@ -48,20 +53,20 @@ public:
 	
 	// Get samples
 	SamplePoint getSample(double weight = 0.0);
-    vector<SamplePoint> getSamples(int numberSamples, double weight = 0.0);
+    std::vector<SamplePoint> getSamples(int numberSamples, double weight = 0.0);
 
-    Mesh mesh;
+    Mesh3d mesh;
 	SamplingMethod method;
 
 	// For Monte Carlo
-    vector<WeightFace> interval;
+    std::vector<WeightFace> interval;
    
-	Mesh3d::Property_map<Mesh3d::Face_index,float> farea;
-    Mesh3d::Property_map<Mesh3d::Face_index,Vector3d> faceNormals;
-	Mesh3d::Property_map<Mesh3d::Face_index,Point3d> fcenter;
-    Mesh3d::Property_map<Mesh3d::Vertex_index,Point3d> points;
+	FaceProperty<double> farea;
+    FaceProperty<Vector3d> fnormal;
+	FaceProperty<Point3d> fcenter;
+    VertexProperty<Point3d> points;
 
-    Vector3d getBaryFace(Mesh3d::Face_vertex f, double U, double V);
+    Point3d getBaryFace(Face f, double U, double V);
 };
 
 // Helper functions

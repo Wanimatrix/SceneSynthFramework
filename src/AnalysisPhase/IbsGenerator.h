@@ -1,3 +1,9 @@
+/**
+This code comes from this paper:
+
+Hu, Ruizhen, et al. "Interaction Context (ICON): Towards a Geometric Functionality Descriptor." ACM Transactions on Graphics 34.
+*/
+
 #pragma once
 
 #include <vector>
@@ -17,7 +23,8 @@ public:
 	~IbsGenerator();
 
 public:
-	std::vector<Mesh3d*> computeIBS(/*Scene * scene, */std::vector<Object*> objects);
+	std::vector<Mesh3d*> computeIBS(/*Scene * scene, */std::vector<Object> objects);
+	void reset();
 
 private:
 	void computeVoronoi();
@@ -33,10 +40,10 @@ private:
 	// std::vector<IBS*> ibsSet;
 	std::vector<Mesh3d*> meshSet;
 	//std::vector<int> activeObjIdx;		// useless, can be commented
-	std::vector<Object*> objects;
+	std::vector<Object> objects;
 
 private:
-	orgQhull::Qhull qhull;	
+	orgQhull::Qhull *qhull;	
 	std::vector<Point3d> voronoiVertices;
 
 	// same size with ibsSet

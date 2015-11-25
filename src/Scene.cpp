@@ -12,44 +12,36 @@ std::vector<Object> Scene::getObjects() const {
     return objects;
 }
 
-void Scene::SamplePoints() {
+void Scene::samplePoints() {
     if (objects.empty())
     {
         return;
     }
 
     // sample based on surface area
-    for (auto obj:objects)
-    {
-        if (obj.getSurfaceArea() == 0)
-        {
-            obj->computeArea();
-        }
-    }
-
-    double minArea = objects[0]->surfaceArea;
+    double minArea = objects[0].getSurfaceArea();
     double totalArea = 0;
     for (auto obj:objects)
     {
-        if (obj->surfaceArea < minArea)
+        if (obj.getSurfaceArea() < minArea)
         {
-            minArea = obj->surfaceArea;
+            minArea = obj.getSurfaceArea();
         }
-        totalArea += obj->surfaceArea;
+        totalArea += obj.getSurfaceArea();
     }
 
     int sampleNum = 2000 * objects.size();
-    for (auto obj:objects)
+    for (auto&& obj:objects)
     {
-        int num = sampleNum * obj->surfaceArea / totalArea;
+        int num = sampleNum * obj.getSurfaceArea() / totalArea;
         if (num < 1000)
         {
             num = 1000;
         }
-        if (obj->isCentral)
+        /*if (obj->isCentral)
         {
             num = num * 2;
-        }
-        obj->sampling(num);
+        }*/
+        obj.sampling(num);
     }
 }

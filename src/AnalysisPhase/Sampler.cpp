@@ -1,3 +1,9 @@
+/**
+This code comes from this paper:
+
+Hu, Ruizhen, et al. "Interaction Context (ICON): Towards a Geometric Functionality Descriptor." ACM Transactions on Graphics 34.
+*/
+
 #include "Sampler.h"
 
 
@@ -9,58 +15,58 @@ Sampler::Sampler(const Mesh3d &srcMesh, SamplingMethod samplingMethod)
     mesh = srcMesh;
 	method = samplingMethod;
 	
-	// mesh->update_face_normals(); // TODO
+	// mesh->update_face_normals(); // OK, as my normals are all calculated in the beginning
 	bool exists;
-    boost:tie(faceNormals,exists) = mesh.property_map<Mesh3d::Face_index,Vector3d>("f:normal");
+    boost::tie(fnormal,exists) = mesh.property_map<Face,Vector3d>("f:normal");
 
 	//SurfaceMeshHelper h(mesh);
-    boost:tie(farea,exists) = mesh.property_map<Mesh3d::Face_index,float>("f:area");
+    boost::tie(farea,exists) = mesh.property_map<Face,double>("f:area");
     points = mesh.points();
 
 	// FaceBarycenterHelper fh(mesh);
-	boost:tie(fcenter,exists) = mesh.property_map<Mesh3d::Face_index,float>("f:center");
+	boost::tie(fcenter,exists) = mesh.property_map<Face,Point3d>("f:center");
 
 	// Sample based on method selected
 	if( method == RANDOM_BARYCENTRIC_AREA || method == RANDOM_BARYCENTRIC_WEIGHTED)
 	{
 		bool created;
-        Mesh3d::Property_map<Mesh3d::Face_index,Vector3d> fprobability;
-        boost::tie(fprobability, created) = mesh.add_property_map<Mesh3d::Face_index,double>("f:probability");
+        FaceProperty<double> fprobability;
+        boost::tie(fprobability, created) = mesh.add_property_map<Face,double>("f:probability");
 		if (method == RANDOM_BARYCENTRIC_AREA)
 		{
 			// Compute all faces area
 			// fprobability = mesh->face_property<Scalar>("f:probability", 0);
 
 			double totalMeshArea = 0;
-			Surface_mesh::Face_iterator fit, fend = mesh->faces_end();
+			// Surface_mesh::Face_iterator fit, fend = mesh->faces_end();
 
-            BOOST_FOREACH(Mesh3d::Face_index f_id, mesh.faces())
+            BOOST_FOREACH(Face f_id, mesh.faces())
 				totalMeshArea += farea[f_id];
 
-			BOOST_FOREACH(Mesh3d::Face_index f_id, mesh.faces())
+			BOOST_FOREACH(Face f_id, mesh.faces())
 				fprobability[f_id] = farea[f_id] / totalMeshArea;
 		}
 		else
 		{
 			// fprobability = mesh->face_property<Scalar>("f:probability", 0);
-            Mesh3d::Property_map<Mesh3d::Face_index,Vector3d> fweight;
-            boost::tie(fweight, created) = mesh.property_map<Mesh3d::Face_index,double>("f:weight");
+            FaceProperty<double> fweight;
+            boost::tie(fweight, created) = mesh.add_property_map<Face,double>("f:weight");
 			// ScalarFaceProperty fweight = mesh->get_face_property<Scalar>("f:weight");
 			double totalWeight = 0;
 			// Surface_mesh::Face_iterator fit, fend = mesh->faces_end();
-			BOOST_FOREACH(Mesh3d::Face_index f_id, mesh.faces())
-				totalWeight += fweight[fit];
+			BOOST_FOREACH(Face f_id, mesh.faces())
+				totalWeight += fweight[f_id];
 
-			BOOST_FOREACH(Mesh3d::Face_index f_id, mesh.faces())
-				fprobability[fit] = fweight[fit] / totalWeight;
+			BOOST_FOREACH(Face f_id, mesh.faces())
+				fprobability[f_id] = fweight[f_id] / totalWeight;
 		}
 
-        interval = std::vector<WeightFace>(mesh->num_of_faces() + 1);
-        interval[0] = WeightFace(0.0, Mesh3d::Face_index(0));
+        interval = std::vector<WeightFace>(mesh.number_of_faces() + 1);
+        interval[0] = WeightFace(0.0, Face(0));
 		int i = 0;
 
 		// Compute mesh area in a cumulative manner
-        BOOST_FOREACH(Mesh3d::Face_index f_id, mesh.faces())
+        BOOST_FOREACH(Face f_id, mesh.faces())
 		{
             interval[f_id+1] = WeightFace(interval[i].weight + fprobability[f_id], f_id);
 			i++;
@@ -84,8 +90,8 @@ SamplePoint Sampler::getSample(double weight)
 		r = uniform();
 
 		// Find corresponding face
-        std::vector<WeightFace>::iterator it = lower_bound(interval.begin(), interval.end(), WeightFace(qMin(r,interval.back().weight)));
-        Mesh3d::Face_index f = it->f;
+        std::vector<WeightFace>::iterator it = lower_bound(interval.begin(), interval.end(), WeightFace(std::min(r,interval.back().weight)));
+        Face f = it->f;
 
 		// Add sample from that face
 		RandomBaricentric(b);
@@ -94,14 +100,14 @@ SamplePoint Sampler::getSample(double weight)
 	}
 	else if( method ==  FACE_CENTER_RANDOM )
 	{
-		int fcount = mesh->num_of_faces();
+		int fcount = mesh.number_of_faces();
 
 		int randTriIndex = (int) (fcount * (((double)rand()) / (double)RAND_MAX)) ;
 
 		if( randTriIndex >= fcount )
 			randTriIndex = fcount - 1;
 
-        Mesh3d::Face_index f(randTriIndex);
+        Face f(randTriIndex);
 
 		// Get triangle center and normal
         sp = SamplePoint(fcenter[f], fnormal[f], farea[f], f, 1 / 3.0, 1 / 3.0);
@@ -110,14 +116,14 @@ SamplePoint Sampler::getSample(double weight)
 	return sp;
 }
 
-vector<SamplePoint> Sampler::getSamples(int numberSamples, double weight)
+std::vector<SamplePoint> Sampler::getSamples(int numberSamples, double weight)
 {
-	vector<SamplePoint> samples;
+	std::vector<SamplePoint> samples;
 
 	if (method == FACE_CENTER_ALL)
 	{
-		BOOST_FOREACH(Mesh3d::Face_index f_id, mesh.faces())
-			samples.push_back(SamplePoint(fcenter[f_id], fnormal[f_id], 0, f_id.idx(), 1 / 3.0, 1 / 3.0));
+		BOOST_FOREACH(Face f_id, mesh.faces())
+			samples.push_back(SamplePoint(fcenter[f_id], fnormal[f_id], 0, f_id, 1 / 3.0, 1 / 3.0));
 	}
 	else
 	{
@@ -129,17 +135,17 @@ vector<SamplePoint> Sampler::getSamples(int numberSamples, double weight)
 	return samples;
 }
 
-Point3d Sampler::getBaryFace( Mesh3d::Face_index f_id, double U, double V )
+Point3d Sampler::getBaryFace( Face f_id, double U, double V )
 {
     // vector<Vector3d> v;
     // Surface_mesh::Vertex_around_face_circulator vit = mesh->vertices(f),vend=vit;
     // do{ v.push_back(points[vit]); } while(++vit != vend);
     std::vector<Point3d> v;
     CGAL::Vertex_around_face_iterator<Mesh3d> vbegin, vend;
-    for(boost::tie(vbegin, vend) = CGAL::vertices_around_face(m_mesh.halfedge(face), m_mesh);;
+    for(boost::tie(vbegin, vend) = CGAL::vertices_around_face(mesh.halfedge(f_id), mesh);
         vbegin != vend; 
         ++vbegin){
-        result.push_back(m_mesh.point(*vbegin));
+        v.push_back(mesh.point(*vbegin));
     }
 
     if(U == 1.0) return v[1];
@@ -149,10 +155,9 @@ Point3d Sampler::getBaryFace( Mesh3d::Face_index f_id, double U, double V )
     double b2 = V;
     double b3 = 1.0 - (U + V);
 
-    Point3d p;
-    p.x() = (b1 * v[0].x()) + (b2 * v[1].x()) + (b3 * v[2].x());
-    p.y() = (b1 * v[0].y()) + (b2 * v[1].y()) + (b3 * v[2].y());
-    p.z() = (b1 * v[0].z()) + (b2 * v[1].z()) + (b3 * v[2].z());
-    return p;
+    double x = (b1 * v[0].x()) + (b2 * v[1].x()) + (b3 * v[2].x());
+    double y = (b1 * v[0].y()) + (b2 * v[1].y()) + (b3 * v[2].y());
+    double z = (b1 * v[0].z()) + (b2 * v[1].z()) + (b3 * v[2].z());
+    return Point3d(x,y,z);
 }
 

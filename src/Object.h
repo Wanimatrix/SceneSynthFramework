@@ -3,18 +3,9 @@
 #include <assimp/mesh.h>
 #include <assimp/matrix4x4.h>
 #include <string>
-#include "Mesh.h"
 
-#include <CGAL/Simple_cartesian.h>
-#include <CGAL/Surface_mesh.h>
-
-
-typedef CGAL::Simple_cartesian<double> Kd;
-typedef Kd::Point_3 Point3d;
-typedef CGAL::Surface_mesh<Point3d> Mesh3d;
-typedef Kd::Vector_3 Vector3d;
-typedef CGAL::Bbox_3 Bbox3d;
-typedef CGAL::Iso_cuboid_3<Kd> IsoCub3d;
+#include "AnalysisPhase/Sampler.h"
+#include "types.h"
 
 class Object
 {
@@ -27,22 +18,29 @@ public:
     virtual aiMatrix4x4 getTransformation() const {return m_transformation;}
     virtual Bbox3d getBbox() const {return m_bbox;}
     virtual Bbox3d bbox() const {return getBbox();}
-    virtual Vector3d getVertexNormal(const Mesh3d::Vertex_index &v_id) const;
-    virtual Vector3d getFaceNormal(const Mesh3d::Face_index &f_id) const;
-    virtual std::vector<Mesh3d::Vertex_index> getVerticesOfFace(const Mesh3d::Face_index &face) const;
+    virtual Vector3d getVertexNormal(const Vertex &v_id) const;
+    virtual Vector3d getFaceNormal(const Face &f_id) const;
+    virtual std::vector<Vertex> getVerticesOfFace(const Face &face) const;
     virtual double getSurfaceArea() const {return surfaceArea;}
+    virtual double getSampleDensity() const {return sampleDensity;}
+    virtual std::vector<SamplePoint> getSamples() const {return samples;}
+
+    virtual void sampling(int num);
 
 private:
     virtual Mesh3d init(const aiMesh *t_mesh);
-    template<class PropT>
-    PropT getProperty(const Mesh3d::Vertex_index &v_id, const std::string &propName) const;
-    template<class PropT>
-    PropT getProperty(const Mesh3d::Face_index &f_id, const std::string &propName) const;
-    virtual Vector3d calculateFaceNormal(const Mesh3d::Face_index &face) const;
+    template <typename PropT>
+    PropT getProperty(const Vertex &v_id, const std::string &propName) const;
+    template <typename PropT>
+    PropT getProperty(const Face &f_id, const std::string &propName) const;
+    virtual Vector3d calculateFaceNormal(const Face &face) const;
+    virtual double calculateFaceArea(const Face &face, const Vector3d &faceNormal) const;
 
-    const std::string m_name;
-    const Mesh3d m_mesh;
-    const aiMatrix4x4 m_transformation;
+    std::string m_name;
+    Mesh3d m_mesh;
+    aiMatrix4x4 m_transformation;
     Bbox3d m_bbox;
     double surfaceArea;
+    double sampleDensity;
+    std::vector<SamplePoint> samples;
 };

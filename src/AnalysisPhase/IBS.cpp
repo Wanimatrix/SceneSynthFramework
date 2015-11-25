@@ -1,3 +1,9 @@
+/**
+This code comes from this paper:
+
+Hu, Ruizhen, et al. "Interaction Context (ICON): Towards a Geometric Functionality Descriptor." ACM Transactions on Graphics 34.
+*/
+
 #include "IBS.h"
 #include "Scene.h"
 #include "QuickMeshDraw.h"

@@ -1,8 +1,14 @@
+/**
+This code comes from this paper:
+
+Hu, Ruizhen, et al. "Interaction Context (ICON): Towards a Geometric Functionality Descriptor." ACM Transactions on Graphics 34.
+*/
 #include "IbsGenerator.h"
 #include "QhullFacetList.h"
 #include "QhullVertexSet.h"
 #include "QhullError.h"
-// #include "OrientHelper.h"
+#include "OrientHelper.h"
+#include <exception>
 // #include "UtilityGlobal.h"
 
 #define PI 3.14159265359
@@ -10,18 +16,36 @@
 IbsGenerator::IbsGenerator()
 {
 	// scene = NULL;
-	// qhull = NULL;
+	qhull = NULL;
 }
 
 IbsGenerator::~IbsGenerator()
 {
-	// if (qhull)
-	// {
-	// 	delete qhull;
-	// }	
+	if (qhull)
+	{
+		delete qhull;
+	}	
 }
 
-std::vector<Mesh3d*> IbsGenerator::computeIBS(/*const Scene &s, */std::vector<Object*> obj)
+void IbsGenerator::reset() {
+	if(qhull) delete qhull;
+	qhull = NULL;
+	voronoiVertices.clear();
+
+	objPair2IbsIdx.clear();
+	ibsRidgeIdxs.clear();
+
+	ridges.clear();
+	ridgeSitePair.clear();
+
+	sampleObjIdx.clear();
+	sampleLocalIdx.clear();
+
+	meshSet.clear();
+	objects.clear();
+}
+
+std::vector<Mesh3d*> IbsGenerator::computeIBS(/*const Scene &s, */std::vector<Object> obj)
 {
 	// scene = s;
 	objects = obj;
@@ -37,22 +61,23 @@ std::vector<Mesh3d*> IbsGenerator::computeIBS(/*const Scene &s, */std::vector<Ob
 void IbsGenerator::computeVoronoi()
 {
 	std::vector<Point3d> points = getInputForVoronoi();
+	std::vector<double> pointCoords;
 
-	Point3d pointsArray[] = new Point3d[points.size()];
 	for(int i = 0; i < points.size()*3; i+=3) {
-		pointsArray[i] = points[i/3].x();
-		pointsArray[i+1] = points[i/3].y();
-		pointsArray[i+2] = points[i/3].z();
-	} // TODO DELETE
+		pointCoords.push_back(points[i/3].x());
+		pointCoords.push_back(points[i/3].y());
+		pointCoords.push_back(points[i/3].z());
+	}
 
 	// use Qhull to create Voronoi diagram
-	//qhull = new orgQhull::Qhull("", 3, (int)points.size(), points[0].data(), "v");
-	qhull.runQhull("", 3, (int)points.size(), pointsArray[0], "v");
+	if(!qhull) qhull = new orgQhull::Qhull("", 3, (int)points.size(), pointCoords.data(), "v");
+	else throw std::invalid_argument( "qhull was already initialized!" );
+	//qhull->runQhull("", 3, (int)points.size(), pointCoords.data(), "v");
 	
 	voronoiVertices.push_back(Point3d(0, 0, 0)); // the index of vertices start from 1, 0 is for the infinite one
-	for ( orgQhull::QhullFacet facet = qhull.firstFacet(); facet != qhull.endFacet(); facet=facet.next() )
+	for ( orgQhull::QhullFacet facet = qhull->firstFacet(); facet != qhull->endFacet(); facet=facet.next() )
 	{
-		orgQhull::QhullPoint p = facet.voronoiVertex(qhull.runId());
+		orgQhull::QhullPoint p = facet.voronoiVertex();
 		voronoiVertices.push_back(Point3d(p[0], p[1], p[2]));
 	}
 
@@ -71,10 +96,10 @@ std::vector<Point3d> IbsGenerator::getInputForVoronoi()
 	// 1. get the sample points on the objects
 	for (int i=0; i<objects.size(); i++)
 	{
-		Object * obj = objects[i];
+		Object obj = objects[i];
 
 		int idx = 0;
-		for (auto sample : obj->getSamples())
+		for (auto sample : obj.getSamples())
 		{
 			points.push_back(sample.pos);
 			sampleObjIdx.push_back(i);			// index the corresponding object index
@@ -92,9 +117,9 @@ std::vector<Point3d> IbsGenerator::getInputForVoronoi()
 	// 	}
 	// 	bbox.extend(obj->bbox);
 	// }
-	IsoCub3d bboxCuboid = IsoCub3d(Bbox3d(std::begin(objects),std::end(objects)));
+	IsoCub3d bboxCuboid = IsoCub3d(CGAL::bbox_3(std::begin(objects),std::end(objects)));
 
-	double radius = (bboxCuboid.max()-bboxCuboid.min()).squared_dist() * 2 / 3;
+	double radius = std::sqrt((bboxCuboid.max()-bboxCuboid.min()).squared_length()) * 2 / 3;
 	Point3d center = CGAL::midpoint(bboxCuboid.max(),bboxCuboid.min());
 
 	int M = 20; 
@@ -166,24 +191,24 @@ std::vector<Point3d> IbsGenerator::getInputForVoronoi()
 void IbsGenerator::findRidges()
 {	
 	int numcenters;
-	bool isLower;
-	facetT *facetlist = qhull.firstFacet().getFacetT();
-	setT * vertices = qh_markvoronoi(qhull.qh(),facetlist, 0, true, &isLower, &numcenters);  // vertices are the input point sites, indexed by pointid
+	unsigned int isLower;
+	facetT *facetlist = qhull->firstFacet().getFacetT();
+	setT * vertices = qh_markvoronoi(qhull->qh(),facetlist, 0, qh_True, &isLower, &numcenters);  // vertices are the input point sites, indexed by pointid
 
 	vertexT *vertex;
 	int vertex_i, vertex_n;
 
-	qhT *qh = qhull.qh();
+	qhT *qh = qhull->qh();
 	FORALLvertices
 		vertex->seen= False;
 
 	int totcount = 0;
 	objPair2IbsIdx.clear();
-	FOREACHvertex_i_(qhull.qh(),vertices) 
+	FOREACHvertex_i_(qhull->qh(),vertices) 
 	{
 		if (vertex) 
 		{
-			if (qhull.qh()->GOODvertex > 0 && qh_pointid(qhull.qh(),vertex->point)+1 != qhull.qh()->GOODvertex)
+			if (qhull->qh()->GOODvertex > 0 && qh_pointid(qhull->qh(),vertex->point)+1 != qhull->qh()->GOODvertex)
 				continue;
 			totcount += findRidgesAroundVertex(vertex);
 		}
@@ -203,17 +228,17 @@ int IbsGenerator::findRidgesAroundVertex(vertexT *atvertex)
 	int count;
 	facetT *neighbor, **neighborp, *neighborA, **neighborAp;
 	setT *centers;
-	setT *tricenters= qh_settemp(qhull.qh(),qhull.qh()->TEMPsize);
+	setT *tricenters= qh_settemp(qhull->qh(),qhull->qh()->TEMPsize);
 
 	vertexT *vertex, **vertexp;
 	boolT firstinf;
-	unsigned int numfacets= (unsigned int)qhull.qh()->num_facets;
+	unsigned int numfacets= (unsigned int)qhull->qh()->num_facets;
 	int totridges= 0;
 
-	qhull.qh()->vertex_visit++;
+	qhull->qh()->vertex_visit++;
 	atvertex->seen= True;
 	if (visitall) {
-		qhT *qh = qhull.qh();
+		qhT *qh = qhull->qh();
 		FORALLvertices
 			vertex->seen= False;
 	}
@@ -224,15 +249,15 @@ int IbsGenerator::findRidgesAroundVertex(vertexT *atvertex)
 	FOREACHneighbor_(atvertex) {
 		if (neighbor->seen) {
 			FOREACHvertex_(neighbor->vertices) {
-				if (vertex->visitid != qhull.qh()->vertex_visit && !vertex->seen) {
-					vertex->visitid= qhull.qh()->vertex_visit;
+				if (vertex->visitid != qhull->qh()->vertex_visit && !vertex->seen) {
+					vertex->visitid= qhull->qh()->vertex_visit;
 					count= 0;
 					firstinf= True;
-					qh_settruncate(qhull.qh(),tricenters, 0);
+					qh_settruncate(qhull->qh(),tricenters, 0);
 					FOREACHneighborA_(vertex) {
 						if (neighborA->seen) {
 							if (neighborA->visitid) {
-								if (!neighborA->tricoplanar || qh_setunique(qhull.qh(),&tricenters, neighborA->center))
+								if (!neighborA->tricoplanar || qh_setunique(qhull->qh(),&tricenters, neighborA->center))
 									count++;
 							}else if (firstinf) {
 								count++;
@@ -241,7 +266,7 @@ int IbsGenerator::findRidgesAroundVertex(vertexT *atvertex)
 						}
 					}
 
-					if (count >= qhull.qh()->hull_dim - 1) { // Each ridge has to have at least hull_dim - 1 vertices
+					if (count >= qhull->qh()->hull_dim - 1) { // Each ridge has to have at least hull_dim - 1 vertices
 						if (firstinf) {
 							if (innerouter == qh_RIDGEouter)
 								continue;
@@ -252,20 +277,20 @@ int IbsGenerator::findRidgesAroundVertex(vertexT *atvertex)
 							unbounded= True;
 						}
 						totridges++;
-						// QhullError(qhull.qh()->ferr, 4017, "qh_eachvoronoi: Voronoi ridge of %d vertices between sites %d and %d\n",
-						// 	count, qh_pointid(qhull.qh(),atvertex->point), qh_pointid(qhull.qh(),vertex->point)); // TODO
+						// QhullError(qhull->qh()->ferr, 4017, "qh_eachvoronoi: Voronoi ridge of %d vertices between sites %d and %d\n",
+						// 	count, qh_pointid(qhull->qh(),atvertex->point), qh_pointid(qhull->qh(),vertex->point)); // TODO
 						if (printvridge) {
-							if (inorder && qhull.qh()->hull_dim == 3+1) /* 3-d Voronoi diagram */
-								centers= qh_detvridge3(qhull.qh(),atvertex, vertex); // determine 3-d Voronoi ridge from 'seen' neighbors of atvertex and vertex, listed in adjacency order (not oriented)
+							if (inorder && qhull->qh()->hull_dim == 3+1) /* 3-d Voronoi diagram */
+								centers= qh_detvridge3(qhull->qh(),atvertex, vertex); // determine 3-d Voronoi ridge from 'seen' neighbors of atvertex and vertex, listed in adjacency order (not oriented)
 							else
-								centers= qh_detvridge(qhull.qh(),vertex);
+								centers= qh_detvridge(qhull->qh(),vertex);
 							// centers : set of facets (i.e., Voronoi vertices)
 
 							// save the new ridge to our own data structure
 							{
 								std::vector< int > sites; // pair of input sites separated by this ridge
-								sites.push_back( qh_pointid(qhull.qh(),atvertex->point) );
-								sites.push_back( qh_pointid(qhull.qh(),vertex->point) );
+								sites.push_back( qh_pointid(qhull->qh(),atvertex->point) );
+								sites.push_back( qh_pointid(qhull->qh(),vertex->point) );
 								
 								bool upperdelaunay = false;
 								facetT *facet, **facetp;
@@ -316,7 +341,7 @@ int IbsGenerator::findRidgesAroundVertex(vertexT *atvertex)
 								
 							}
 
-							qh_settempfree(qhull.qh(),&centers);
+							qh_settempfree(qhull->qh(),&centers);
 						}
 					}
 				}
@@ -325,7 +350,7 @@ int IbsGenerator::findRidgesAroundVertex(vertexT *atvertex)
 	}
 	FOREACHneighbor_(atvertex)
 		neighbor->seen= False;
-	qh_settempfree(qhull.qh(),&tricenters);
+	qh_settempfree(qhull->qh(),&tricenters);
 	return totridges;
 } 
 
@@ -393,8 +418,8 @@ Mesh3d* IbsGenerator::buildIbsMesh( int i,  std::vector<std::pair<int, int>>& sa
 	// TODO
 	// //////////////////////////////////////////////////////////////////////////
 	// // 2. re-orient all faces coherently
-	// OrientHelper help;
-	// ridgesNew = help.reorient(ridgesNew, vIdx.size());	// ridgesNew stores new index
+	OrientHelper help;
+	ridgesNew = help.reorient(ridgesNew, vIdx.size());	// ridgesNew stores new index
 
 	//////////////////////////////////////////////////////////////////////////
 	// 3. make the normal point from obj1 to obj2
@@ -404,8 +429,8 @@ Mesh3d* IbsGenerator::buildIbsMesh( int i,  std::vector<std::pair<int, int>>& sa
 	fv.push_back(voronoiVertices[vIdx[ridgesNew[0][1]]]);
 	fv.push_back(voronoiVertices[vIdx[ridgesNew[0][2]]]);
 	Vector3d n = CGAL::cross_product((fv[2] - fv[1]),(fv[0] - fv[1])); // .normalized()
-	n = n / n.squared_length();
-	Vector3d center = Vector3d(
+	n = n / std::sqrt(n.squared_length());
+	Point3d center = Point3d(
 		(fv[0].x() + fv[1].x() + fv[2].x())/3.0,
 		(fv[0].y() + fv[1].y() + fv[2].y())/3.0,
 		(fv[0].z() + fv[1].z() + fv[2].z())/3.0);
@@ -414,9 +439,9 @@ Mesh3d* IbsGenerator::buildIbsMesh( int i,  std::vector<std::pair<int, int>>& sa
 	int ridge_id = ibsRidgeIdxs[i][0];
 	std::vector<int> pair = ridgeSitePair[ridge_id];
 	int sIdx = pair[1];
-	Vector3d s2 = objects[sampleObjIdx[sIdx]]->getSamples()[sampleLocalIdx[sIdx]].pos; // TODO
+	Point3d s2 = objects[sampleObjIdx[sIdx]].getSamples()[sampleLocalIdx[sIdx]].pos;
 	Vector3d d = (s2 - center); // .normalized();
-	d = d / d.squared_length();
+	d = d / std::sqrt(d.squared_length());
 
 	// n is the normal of Voronoi faces, and d is the direction pointing from center to s2
 	bool flip = (n * d) < 0;	// if the normal is not pointing to objs, flip the mesh
@@ -434,7 +459,7 @@ Mesh3d* IbsGenerator::buildIbsMesh( int i,  std::vector<std::pair<int, int>>& sa
 	}
 
 	// add faces
-	// Face f;
+	Face f;
 	for(int j=0; j<ridgesNew.size(); j++)
 	{
 		std::vector<int> pair = ridgeSitePair[remainRidgeIdx[j]];
@@ -443,16 +468,16 @@ Mesh3d* IbsGenerator::buildIbsMesh( int i,  std::vector<std::pair<int, int>>& sa
 		{
 			if (flip)
 			{
-				mesh->add_face(cgal_vertIdxes[ridges[ibsRidgeIdxs[i][j]][k+1]],cgal_vertIdxes[ridges[ibsRidgeIdxs[i][j]][k]],cgal_vertIdxes[ridges[ibsRidgeIdxs[i][j]][0]]);
-				// f = mesh->add_face(Vertex(ridgesNew[j][k+1]), Vertex(ridgesNew[j][k]), Vertex(ridgesNew[j][0]));
+				//f = mesh->add_face(cgal_vertIdxes[ridgesNew[j][k+1]],cgal_vertIdxes[ridgesNew[ibsRidgeIdxs[i][j]][k]],cgal_vertIdxes[ridgesNew[ibsRidgeIdxs[i][j]][0]]);
+				 f = mesh->add_face(cgal_vertIdxes[ridgesNew[j][k+1]], cgal_vertIdxes[ridgesNew[j][k]], cgal_vertIdxes[ridgesNew[j][0]]);
 			}
 			else
 			{
-				mesh->add_face(cgal_vertIdxes[ridges[ibsRidgeIdxs[i][j]][0]],cgal_vertIdxes[ridges[ibsRidgeIdxs[i][j]][k]],cgal_vertIdxes[ridges[ibsRidgeIdxs[i][j]][k+1]]);
-				// f = mesh->add_face(Vertex(ridgesNew[j][0]), Vertex(ridgesNew[j][k]), Vertex(ridgesNew[j][k+1]));
+				//f = mesh->add_face(cgal_vertIdxes[ridgesNew[ibsRidgeIdxs[i][j]][0]],cgal_vertIdxes[ridgesNew[ibsRidgeIdxs[i][j]][k]],cgal_vertIdxes[ridgesNew[ibsRidgeIdxs[i][j]][k+1]]);
+				f = mesh->add_face(cgal_vertIdxes[ridgesNew[j][0]], cgal_vertIdxes[ridgesNew[j][k]], cgal_vertIdxes[ridgesNew[j][k+1]]);
 			}	
 
-			if (true)//(f.is_valid()) //TODO
+			if (f != -1)//(f.is_valid())
 			{	
 				samplePairs.push_back(std::pair<int, int>(sampleLocalIdx[pair[0]], sampleLocalIdx[pair[1]]));								
 			}

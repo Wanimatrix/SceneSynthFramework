@@ -10,6 +10,7 @@ public:
 
     virtual void addObject(Object object);
     virtual std::vector<Object> getObjects() const;
+    virtual void samplePoints();
 
 private:
     std::vector<Object> objects;

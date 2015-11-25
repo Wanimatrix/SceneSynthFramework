@@ -9,10 +9,11 @@ solution "SceneSynthesisFramework"
       kind "ConsoleApp"
       language "C++"
       buildoptions { "-std=c++11" }
-      -- includedirs ("/usr/local/include")
+      includedirs ("/usr/local/include")
+      libdirs ("/usr/local/lib")
       files { "**.h", "**.cpp" }
 
-      excludes {"AnalysisPhase/Analysis*","AnalysisPhase/IBS*","AnalysisPhase/Constraint*","Mesh*","Vertex*","Face*"}
+      excludes {"AnalysisPhase/IBS.*","AnalysisPhase/IBSConstraint*","Mesh*","Vertex*","Face*"}
 
       -- Output
       targetdir ("../bin")
@@ -32,18 +33,30 @@ solution "SceneSynthesisFramework"
          includedirs (libdir .. "/eigen")
 
          -- QHull --
-         qhulldir = libdir .. "/qhull"
-         includedirs (qhulldir .. "/src/libqhullcpp")
-         includedirs (qhulldir .. "/src")
+         qhulldir = "/usr/local"
+         -- qhulldir = libdir .. "/qhull"
+         includedirs (qhulldir .. "/include/libqhullcpp")
+         includedirs (qhulldir .. "/include/libqhull_r")
+         -- includedirs (qhulldir .. "/src")
          libdirs (qhulldir .. "/lib")
          links ("qhullcpp")
+         --links ("qhullstatic_r")
 
-         -- CGAL -- 
-         links ("CGAL")
+         -- CGAL --
+         cgaldir = libdir .. "/CGAL-4.7"
 
       configuration "windows"
          links ("assimp.dll")
-         postbuildcommands {"cp " .. assimpdir .. "/bin/cygassimp-3.dll ../bin", "make"}
+         libdirs (cgaldir .. "/lib")
+         links ("CGAL.dll")
+         links ("CGAL_Core.dll")
+
+         links ("qhull_r.dll")
+         -- links ("qhull.dll")
+         --links ("qhull_p.dll")
+         postbuildcommands {"cp " .. assimpdir .. "/bin/cygassimp-3.dll ../bin"}
+         postbuildcommands {"cp " .. qhulldir .. "/bin/*qhull*.dll ../bin"}
+         postbuildcommands {"cp " .. cgaldir .. "/bin/cygCGAL* ../bin"}
 
       configuration "macosx"
          links ("assimp")

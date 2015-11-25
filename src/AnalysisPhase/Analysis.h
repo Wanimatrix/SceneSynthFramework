@@ -1,6 +1,10 @@
 #ifndef ANALYSIS_H
 #define ANALYSIS_H
 
+#include "../Input.h"
+#include "Constraint.h"
+#include <vector>
+
 class Analysis
 {
 public:
@@ -9,7 +13,7 @@ public:
     
     virtual std::vector<Constraint> run() = 0;
 
-private:
+protected:
     const Input m_input;
 };
 
