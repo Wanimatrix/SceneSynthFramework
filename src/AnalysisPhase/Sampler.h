@@ -7,6 +7,8 @@ Hu, Ruizhen, et al. "Interaction Context (ICON): Towards a Geometric Functionali
 #pragma once
 
 #include "../types.h"
+#include "../Mesh.h"
+#include <memory>
 
 // Helper structures
 struct SamplePoint{
@@ -48,14 +50,14 @@ class Sampler{
 private:
 
 public:
-    Sampler(const Mesh3d &srcMesh, SamplingMethod samplingMethod = RANDOM_BARYCENTRIC_AREA );
+    Sampler(const Mesh &srcMesh, SamplingMethod samplingMethod = RANDOM_BARYCENTRIC_AREA );
 	//Sampler(void * srcMesh, SamplingMethod samplingMethod);
 	
 	// Get samples
 	SamplePoint getSample(double weight = 0.0);
     std::vector<SamplePoint> getSamples(int numberSamples, double weight = 0.0);
 
-    Mesh3d mesh;
+    std::shared_ptr<Mesh3d> mesh;
 	SamplingMethod method;
 
 	// For Monte Carlo

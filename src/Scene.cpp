@@ -19,21 +19,21 @@ void Scene::samplePoints() {
     }
 
     // sample based on surface area
-    double minArea = objects[0].getSurfaceArea();
+    double minArea = objects[0].getMesh().getSurfaceArea();
     double totalArea = 0;
     for (auto obj:objects)
     {
-        if (obj.getSurfaceArea() < minArea)
+        if (obj.getMesh().getSurfaceArea() < minArea)
         {
-            minArea = obj.getSurfaceArea();
+            minArea = obj.getMesh().getSurfaceArea();
         }
-        totalArea += obj.getSurfaceArea();
+        totalArea += obj.getMesh().getSurfaceArea();
     }
 
     int sampleNum = 2000 * objects.size();
     for (auto&& obj:objects)
     {
-        int num = sampleNum * obj.getSurfaceArea() / totalArea;
+        int num = sampleNum * obj.getMesh().getSurfaceArea() / totalArea;
         if (num < 1000)
         {
             num = 1000;

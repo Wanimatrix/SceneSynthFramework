@@ -9,6 +9,7 @@ Hu, Ruizhen, et al. "Interaction Context (ICON): Towards a Geometric Functionali
 #include "QhullError.h"
 #include "OrientHelper.h"
 #include <exception>
+#include <memory>
 // #include "UtilityGlobal.h"
 
 #define PI 3.14159265359
@@ -45,10 +46,26 @@ void IbsGenerator::reset() {
 	objects.clear();
 }
 
-std::vector<Mesh3d*> IbsGenerator::computeIBS(/*const Scene &s, */std::vector<Object> obj)
+std::vector<Mesh> IbsGenerator::computeIBSForEachTwoObjs(std::vector<Object> objs)
+{
+	std::vector<Mesh> result;
+	for (int i = 0; i < objs.size(); ++i)
+	{
+		for (int j = i+1; j < objs.size(); ++j)
+		{
+			if (qhull) reset();
+			std::vector<Mesh> meshes = computeIBS(std::vector<Object>({objs[i],objs[j]}));
+			result.insert(result.end(),meshes.begin(),meshes.end());
+		}
+	}
+	
+	return result;
+}
+
+std::vector<Mesh> IbsGenerator::computeIBS(std::vector<Object> objs)
 {
 	// scene = s;
-	objects = obj;
+	objects = objs;
 
 	computeVoronoi();
 	findRidges();
@@ -376,7 +393,7 @@ void IbsGenerator::buildIBS()
 	}
 }
 
-Mesh3d* IbsGenerator::buildIbsMesh( int i,  std::vector<std::pair<int, int>>& samplePairs )
+Mesh IbsGenerator::buildIbsMesh( int i,  std::vector<std::pair<int, int>>& samplePairs )
 {
 	//////////////////////////////////////////////////////////////////////////
 	// 1. re-index the vertices and update the ridges
@@ -448,18 +465,22 @@ Mesh3d* IbsGenerator::buildIbsMesh( int i,  std::vector<std::pair<int, int>>& sa
 
 	//////////////////////////////////////////////////////////////////////////
 	// 4. build the mesh
-	Mesh3d * mesh = new Mesh3d();
+	std::shared_ptr<Mesh3d> mesh3d(new Mesh3d());
 
 	// add vertices
 	std::vector<Mesh3d::Vertex_index> cgal_vertIdxes;
 	for (int j=0; j<vIdx.size(); j++) 
 	{
 		Point3d vert = voronoiVertices[vIdx[j]];
-		cgal_vertIdxes.push_back(mesh->add_vertex(vert));
+		cgal_vertIdxes.push_back(mesh3d->add_vertex(vert));
 	}
 
 	// add faces
 	Face f;
+	bool created;
+	FaceProperty<Vector3d> faceNormals;
+    boost::tie(faceNormals, created) = mesh3d->add_property_map<Face,Vector3d>("f:normal");
+    VertexProperty<Point3d> points = mesh3d->points();
 	for(int j=0; j<ridgesNew.size(); j++)
 	{
 		std::vector<int> pair = ridgeSitePair[remainRidgeIdx[j]];
@@ -468,26 +489,30 @@ Mesh3d* IbsGenerator::buildIbsMesh( int i,  std::vector<std::pair<int, int>>& sa
 		{
 			if (flip)
 			{
-				//f = mesh->add_face(cgal_vertIdxes[ridgesNew[j][k+1]],cgal_vertIdxes[ridgesNew[ibsRidgeIdxs[i][j]][k]],cgal_vertIdxes[ridgesNew[ibsRidgeIdxs[i][j]][0]]);
-				 f = mesh->add_face(cgal_vertIdxes[ridgesNew[j][k+1]], cgal_vertIdxes[ridgesNew[j][k]], cgal_vertIdxes[ridgesNew[j][0]]);
+				//f = mesh3d->add_face(cgal_vertIdxes[ridgesNew[j][k+1]],cgal_vertIdxes[ridgesNew[ibsRidgeIdxs[i][j]][k]],cgal_vertIdxes[ridgesNew[ibsRidgeIdxs[i][j]][0]]);
+				 f = mesh3d->add_face(cgal_vertIdxes[ridgesNew[j][k+1]], cgal_vertIdxes[ridgesNew[j][k]], cgal_vertIdxes[ridgesNew[j][0]]);
+				 faceNormals[f] = CGAL::normal(points[cgal_vertIdxes[ridgesNew[j][k+1]]], points[cgal_vertIdxes[ridgesNew[j][k]]], points[cgal_vertIdxes[ridgesNew[j][0]]]);
 			}
 			else
 			{
-				//f = mesh->add_face(cgal_vertIdxes[ridgesNew[ibsRidgeIdxs[i][j]][0]],cgal_vertIdxes[ridgesNew[ibsRidgeIdxs[i][j]][k]],cgal_vertIdxes[ridgesNew[ibsRidgeIdxs[i][j]][k+1]]);
-				f = mesh->add_face(cgal_vertIdxes[ridgesNew[j][0]], cgal_vertIdxes[ridgesNew[j][k]], cgal_vertIdxes[ridgesNew[j][k+1]]);
+				//f = mesh3d->add_face(cgal_vertIdxes[ridgesNew[ibsRidgeIdxs[i][j]][0]],cgal_vertIdxes[ridgesNew[ibsRidgeIdxs[i][j]][k]],cgal_vertIdxes[ridgesNew[ibsRidgeIdxs[i][j]][k+1]]);
+				f = mesh3d->add_face(cgal_vertIdxes[ridgesNew[j][0]], cgal_vertIdxes[ridgesNew[j][k]], cgal_vertIdxes[ridgesNew[j][k+1]]);
+				faceNormals[f] = CGAL::normal(points[cgal_vertIdxes[ridgesNew[j][0]]], points[cgal_vertIdxes[ridgesNew[j][k]]], points[cgal_vertIdxes[ridgesNew[j][k+1]]]);
 			}	
 
 			if (f != -1)//(f.is_valid())
 			{	
 				samplePairs.push_back(std::pair<int, int>(sampleLocalIdx[pair[0]], sampleLocalIdx[pair[1]]));								
 			}
+
+
 		}
 	}
 
-	if (samplePairs.size() != mesh->number_of_faces())
+	if (samplePairs.size() != mesh3d->number_of_faces())
 	{
-		std::cout << "ERROR: the number of sample pairs does not equal to that of triangles!!!  " << samplePairs.size() << " vs. " << mesh->number_of_faces() << std::endl;
+		std::cout << "ERROR: the number of sample pairs does not equal to that of triangles!!!  " << samplePairs.size() << " vs. " << mesh3d->number_of_faces() << std::endl;
 	}
 
-	return mesh;
+	return Mesh(mesh3d);
 }
