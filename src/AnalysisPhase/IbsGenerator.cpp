@@ -10,6 +10,7 @@ Hu, Ruizhen, et al. "Interaction Context (ICON): Towards a Geometric Functionali
 #include "OrientHelper.h"
 #include <exception>
 #include <memory>
+
 // #include "UtilityGlobal.h"
 
 #define PI 3.14159265359
@@ -25,7 +26,10 @@ IbsGenerator::~IbsGenerator()
 	if (qhull)
 	{
 		delete qhull;
-	}	
+	}
+	for(int i = 0; i < ridgeSitePair.size(); i++) {
+		if(ridgeSitePair[i]) delete[] ridgeSitePair[i];
+	}
 }
 
 void IbsGenerator::reset() {
@@ -37,6 +41,9 @@ void IbsGenerator::reset() {
 	ibsRidgeIdxs.clear();
 
 	ridges.clear();
+	for(int i = 0; i < ridgeSitePair.size(); i++) {
+		if(ridgeSitePair[i]) delete[] ridgeSitePair[i];
+	}
 	ridgeSitePair.clear();
 
 	sampleObjIdx.clear();
@@ -49,12 +56,15 @@ void IbsGenerator::reset() {
 std::vector<Mesh> IbsGenerator::computeIBSForEachTwoObjs(std::vector<Object> objs)
 {
 	std::vector<Mesh> result;
-	for (int i = 0; i < objs.size(); ++i)
+	int i;
+	for (i = 0; i < objs.size(); ++i)
 	{
 		for (int j = i+1; j < objs.size(); ++j)
 		{
 			if (qhull) reset();
+			timer.start();
 			std::vector<Mesh> meshes = computeIBS(std::vector<Object>({objs[i],objs[j]}));
+			timer.printElapsedTime("IBS");
 			result.insert(result.end(),meshes.begin(),meshes.end());
 		}
 	}
@@ -221,6 +231,10 @@ void IbsGenerator::findRidges()
 
 	int totcount = 0;
 	objPair2IbsIdx.clear();
+
+	std::cout << "Amount ridges: " << qh->ridgeoutnum << std::endl;
+
+
 	FOREACHvertex_i_(qhull->qh(),vertices) 
 	{
 		if (vertex) 
@@ -304,10 +318,15 @@ int IbsGenerator::findRidgesAroundVertex(vertexT *atvertex)
 							// centers : set of facets (i.e., Voronoi vertices)
 
 							// save the new ridge to our own data structure
+							int *sites = nullptr;
 							{
-								std::vector< int > sites; // pair of input sites separated by this ridge
+								/*std::vector< int > sites; // pair of input sites separated by this ridge
 								sites.push_back( qh_pointid(qhull->qh(),atvertex->point) );
-								sites.push_back( qh_pointid(qhull->qh(),vertex->point) );
+								sites.push_back( qh_pointid(qhull->qh(),vertex->point) );*/
+
+								sites = new int[2];
+								sites[0] = qh_pointid(qhull->qh(),atvertex->point);
+								sites[1] = qh_pointid(qhull->qh(),vertex->point);
 								
 								bool upperdelaunay = false;
 								facetT *facet, **facetp;
@@ -454,7 +473,7 @@ Mesh IbsGenerator::buildIbsMesh( int i,  std::vector<std::pair<int, int>>& sampl
 	// Vector3d center = (fv[0] + fv[1] + fv[2]) / 3.0;
 
 	int ridge_id = ibsRidgeIdxs[i][0];
-	std::vector<int> pair = ridgeSitePair[ridge_id];
+	int *pair = ridgeSitePair[ridge_id];
 	int sIdx = pair[1];
 	Point3d s2 = objects[sampleObjIdx[sIdx]].getSamples()[sampleLocalIdx[sIdx]].pos;
 	Vector3d d = (s2 - center); // .normalized();
@@ -483,7 +502,7 @@ Mesh IbsGenerator::buildIbsMesh( int i,  std::vector<std::pair<int, int>>& sampl
     VertexProperty<Point3d> points = mesh3d->points();
 	for(int j=0; j<ridgesNew.size(); j++)
 	{
-		std::vector<int> pair = ridgeSitePair[remainRidgeIdx[j]];
+		int *pair = ridgeSitePair[remainRidgeIdx[j]];
 		// add the triangle fan for each polygon
 		for (int k=1; k<ridgesNew[j].size()-1; k++)
 		{
@@ -502,7 +521,7 @@ Mesh IbsGenerator::buildIbsMesh( int i,  std::vector<std::pair<int, int>>& sampl
 
 			if (f != -1)//(f.is_valid())
 			{	
-				samplePairs.push_back(std::pair<int, int>(sampleLocalIdx[pair[0]], sampleLocalIdx[pair[1]]));								
+				samplePairs.push_back(std::pair<int, int>(sampleLocalIdx[pair[0]], sampleLocalIdx[pair[1]]));
 			}
 
 

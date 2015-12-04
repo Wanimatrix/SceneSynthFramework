@@ -10,22 +10,16 @@ Mesh::Mesh(std::shared_ptr<Mesh3d> t_mesh) : mesh3d(t_mesh) {
 
     if(!vNormalsExist) {
         vNormals = mesh3d->add_property_map<Vertex,Vector3d>("v:normal").first;
-
         BOOST_FOREACH(Vertex v_id, mesh3d->vertices())
             vNormals[v_id] = calculateVertexNormal(v_id);
     }
-
-    if(!fNormalsExist) {
-        fNormals = mesh3d->add_property_map<Face,Vector3d>("f:normal").first;
-
-        BOOST_FOREACH(Face f_id, mesh3d->faces())
-            fNormals[f_id] = calculateFaceNormal(f_id);
-    } 
+    if(!fNormalsExist) fNormals = mesh3d->add_property_map<Face,Vector3d>("f:normal").first;
 
     FaceProperty<double> fAreas;
     surfaceArea = 0;
     fAreas = mesh3d->add_property_map<Face,double>("f:area").first;
     BOOST_FOREACH(Face f_id, mesh3d->faces()) {
+        if(!fNormalsExist) fNormals[f_id] = calculateFaceNormal(f_id);
         fAreas[f_id] = calculateFaceArea(f_id, fNormals[f_id]);
         surfaceArea += fAreas[f_id];
     }

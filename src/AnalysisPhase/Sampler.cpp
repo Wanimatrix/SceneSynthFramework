@@ -50,7 +50,7 @@ Sampler::Sampler(const Mesh &srcMesh, SamplingMethod samplingMethod)
 		{
 			// fprobability = mesh->face_property<Scalar>("f:probability", 0);
             FaceProperty<double> fweight;
-            boost::tie(fweight, created) = mesh->add_property_map<Face,double>("f:weight");
+            boost::tie(fweight, created) = mesh->property_map<Face,double>("f:weight");
 			// ScalarFaceProperty fweight = mesh->get_face_property<Scalar>("f:weight");
 			double totalWeight = 0;
 			// Surface_mesh::Face_iterator fit, fend = mesh->faces_end();

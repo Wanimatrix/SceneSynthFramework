@@ -6,11 +6,11 @@ Hu, Ruizhen, et al. "Interaction Context (ICON): Towards a Geometric Functionali
 
 #include "IBS.h"
 #include "Scene.h"
-#include "QuickMeshDraw.h"
-#include "RenderObjectExt.h"
-#include "SurfaceMeshHelper.h"
-#include <QTime>
-#include "UtilityGlobal.h"
+//#include "QuickMeshDraw.h"
+//#include "RenderObjectExt.h"
+//#include "SurfaceMeshHelper.h"
+//#include <QTime>
+//#include "UtilityGlobal.h"
 
 #define PI 3.1415926
 
@@ -21,7 +21,9 @@ IBS::IBS()
 	sampleRatio = 1.0;
 	maxWeight = 0;
 	totalWeight = 0;
-	bettiNumbers << 0 << 0 << 0;
+	bettiNumbers.push_back(0);
+	bettiNumbers.push_back(0);
+	bettiNumbers.push_back(0);
 }
 
 
@@ -32,7 +34,9 @@ IBS::IBS(Scene *s)
 	sampleRatio = 1.0;
 	maxWeight = 0;
 	totalWeight = 0;
-	bettiNumbers << 0 << 0 << 0;
+	bettiNumbers.push_back(0);
+	bettiNumbers.push_back(0);
+	bettiNumbers.push_back(0);
 }
 
 IBS::~IBS()
@@ -43,11 +47,11 @@ IBS::~IBS()
 	}
 }
 
-void IBS::draw(	bool drawIbsSample, bool drawIbsWeight, QColor color)
+/*void IBS::draw(	bool drawIbsSample, bool drawIbsWeight, QColor color)
 {
 	if (mesh)
 	{
-		ScalarFaceProperty fweight = mesh->get_face_property<Scalar>("f:weight");
+		FaceProperty fweight = mesh->getFaceProperty<Scalar>("f:weight");
 
 		if (!drawIbsWeight || !fweight.is_valid())
 		{
@@ -98,43 +102,52 @@ void IBS::draw(	bool drawIbsSample, bool drawIbsWeight, QColor color)
 			sampleRender.draw();
 		}		
 	}
-}
+}*/
 
 void IBS::computeSampleWeightForTri()			// according to Xi's IBS paper
 {
-	ScalarFaceProperty fweight = mesh->get_face_property<Scalar>("f:weight");
+	FaceProperty<double> fweight = mesh->getFaceProperty<double>("weight");
 	if (fweight.is_valid()) 
 	{
 		return;
 	}	
 
-	SurfaceMeshHelper h(mesh);
-	Vector3VertexProperty points = h.getVector3VertexProperty(VPOINT);
-	ScalarFaceProperty farea = h.computeFaceAreas();
+	//SurfaceMeshHelper h(mesh);
+	//Vector3VertexProperty points = h.getVector3VertexProperty(VPOINT);
+	VertexProperty<Point3d> points = mesh.mesh3d->points();
+	FaceProperty<double> farea = mesh->getFaceProperty<double>("area"); //h.computeFaceAreas();
 
-	mesh->update_face_normals();
-	Vector3FaceProperty fnormal = mesh->get_face_property<Vector3>(FNORMAL);
-	ScalarFaceProperty fdist = mesh->add_face_property<Scalar>("f:dist");
+	//mesh->update_face_normals();
+	FaceProperty<Vector3d> fnormal = mesh->getFaceProperty<Vector3d>("normal");
+	FaceProperty<double> fdist;
+    fdist = mesh->add_property_map<Face,double>("f:dist").first;
+	//FaceProperty fdist = mesh->add_face_property<Scalar>("dist");
 	
 	maxWeight = 0;
 	totalWeight = 0;
-	fweight = mesh->face_property<Scalar>("f:weight", 0);
-	for (auto f : mesh->faces())
+	//fweight = mesh->face_property<Scalar>("f:weight", 0);
+	BOOST_FOREACH(Face f_id, mesh->faces())
 	{
-		int idx = samplePairs[f.idx()].second;
-		Vec3d s = obj2->samples[idx].pos;
+		fweight[f_id] = 0;
+		int idx = samplePairs[static_cast<int>(f_id)].second;
+		Point3d s = obj2->samples[idx].pos;
 
-		Vec3d center(0,0,0);
-		Surface_mesh::Vertex_around_face_circulator fvit, fvend;
-		fvit = fvend = mesh->vertices(f);
-		do{ center += points[fvit]; } while (++fvit != fvend);
-		center /= 3.0;
+		Point3d center(0,0,0);
+		std::vector<Vertex> faceVertices = getVerticesOfFace(f_id);
+		if(faceVertices.size() == 3)
+			center = CGAL::centroid(faceVertices[0],faceVertices[1],faceVertices[2]);
+		else
+			center = CGAL::centroid(faceVertices[0],faceVertices[1],faceVertices[2],faceVertices[3]);
+		/*for(Vertex v : faceVertices) {
+			center = Point3d(center.x() + points[v].x(),center.y() + points[v].y(),center.z() + points[v].z());
+		}
+		center = Point3d(center.x()/3.0,center.y()/3.0,center.z()/3.0);*/
 
-		Vec3d d = s - center;
-		Vec3d n = fnormal[f];
+		Vector3d d = s - center;
+		Vector3d n = fnormal[f];
 
-		double dist = d.norm();
-		double angle = acos(d.dot(n) / dist);	
+		double dist = std::sqrt(d.squared_length());
+		double angle = std::acos((d * n) / dist);	
 
 		if ( angle >= PI / 2 )
 		{
@@ -151,20 +164,22 @@ void IBS::computeSampleWeightForTri()			// according to Xi's IBS paper
 		//bbox.extend(scene->objects[objIdx2]->bbox);
 		//double distThreshold = bbox.diagonal().norm() * 0.5;
 
-		double distThreshold = scene->bbox.diagonal().norm() * 0.5;
+		IsoCub3d bboxCuboid = IsoCub3d(CGAL::bbox_3(std::begin(objects),std::end(objects)));
+
+		double distThreshold = std::sqrt((bboxCuboid.max()-bboxCuboid.min()).squared_length()) * 0.5;
 		double disWeight = (dist <= distThreshold)? pow(1 - (dist / distThreshold), 20) : 0;
 			
-		double angleThreshold = PI / 3;
+		double angleThreshold = PI / 3; // 60 deg
 		double angleWeight = (angle <= angleThreshold)? (1 - angle / angleThreshold) : 0 ;
 
-		double areaWeight = farea[f];
+		double areaWeight = farea[f_id];
 
-		fweight[f] = disWeight * angleWeight * areaWeight;
+		fweight[f_id] = disWeight * angleWeight * areaWeight;
 
-		totalWeight += fweight[f];
-		if (fweight[f] > maxWeight)
+		totalWeight += fweight[f_id];
+		if (fweight[f_id] > maxWeight)
 		{
-			maxWeight = fweight[f];
+			maxWeight = fweight[f_id];
 		}
 	}
 
@@ -184,15 +199,15 @@ void IBS::sampling( int num )
 
 	computeSampleWeightForTri();
 
-	Sampler s(mesh, RANDOM_BARYCENTRIC_WEIGHTED);
+	Sampler s(ibsObj->getMesh(), RANDOM_BARYCENTRIC_WEIGHTED);
 	samples = s.getSamples(num);
 	
-	sampleRender.clear();
+	/*sampleRender.clear();
 	for (auto sample : samples)
 	{
 		//sampleRender.addPointNormal(sample.pos, sample.n, QColor(255, 255, 0));
 		sampleRender.addPoint(sample.pos, QColor(255, 255, 0));
-	}
+	}*/
 }
 
 void IBS::computeGeomFeatures()
@@ -213,16 +228,16 @@ void IBS::computeTopoFeatures()
 
 void IBS::computePFH()
 {
-	// sample points
+	// sample points (using importance sampling)
 	int sampleNum = 1000 * sampleRatio;
 	sampling(sampleNum);
 
 	// compute PFH, make sure normal points to interacting object
-	QVector<QVector<double>> hist;
+	std::vector<std::vector<double>> hist;
 	for (int i = 0; i < samples.size(); ++i)
-		hist << computePfhForSample(i, pointToCentralObject);
+		hist.push_back(computePfhForSample(i, pointToCentralObject));
 
-	QVector<double> mean(hist[0].size(), 0);
+	std::vector<double> mean(hist[0].size(), 0);
 	for(int i=0; i<mean.size(); i++)
 	{
 		for (auto h:hist)
@@ -233,7 +248,7 @@ void IBS::computePFH()
 		mean[i] /= hist.size();
 	}
 
-	QVector<double> deviation(hist[0].size(), 0);		// standard deviation of the histogram
+	std::vector<double> deviation(hist[0].size(), 0);		// standard deviation of the histogram
 	for(int i=0; i<deviation.size(); i++)
 	{
 		for (auto h:hist)
@@ -246,7 +261,8 @@ void IBS::computePFH()
 	}
 
 	pfh.clear();
-	pfh << mean << deviation;		
+	pfh.push_back(mean);
+	pfh.push_back(deviation);
 }
 
 void IBS::computeDirHist()
@@ -255,16 +271,16 @@ void IBS::computeDirHist()
 	sampling(sampleNum);
 
 	int bNum = 10;
-	QVector<double> h(bNum, 0);
+	std::vector<double> h(bNum, 0);
 	for (auto s:samples)
 	{
-		Vec3d n = s.n;
+		Vector3d n = s.n;
 		if (pointToCentralObject)
 		{
 			n = -n;
 		}
 
-		double angle = acos(scene->upright.dot(n));
+		double angle = acos(upright * n);
 
 		int bIdx = angle / PI * 10;
 		bIdx = (bIdx > 9)? 9:bIdx;
@@ -292,14 +308,17 @@ void IBS::computeDistHist()
 		distHist[i] = 0;
 	}
 
-	Eigen::AlignedBox3d bbox = obj1->bbox;
-	bbox.extend(obj2->bbox);
-	double th = bbox.diagonal().norm() / 8.0;
+	/*Eigen::AlignedBox3d bbox = obj1->bbox;
+	bbox.extend(obj2->bbox);*/
+
+	std::vector<Object *> objs({obj1,obj2});
+	IsoCub3d bboxCuboid = IsoCub3d(CGAL::bbox_3(std::begin(objs),std::end(objs)));
+	double th = std::sqrt((bboxCuboid.max()-bboxCuboid.min()).squared_length()) / 8.0;
 
 	for (auto s:samples)
 	{
-		Vec3d site = obj1->samples[samplePairs[s.findex].first].pos;
-		double d = (s.pos - site).norm();
+		Vector3d site = obj1->samples[samplePairs[s.findex].first].pos;
+		double d = std::sqrt((s.pos - site).squared_length());
 
 		int bIdx = (int) (d / th * 10);
 		bIdx = bIdx > 9? 9 : bIdx;
@@ -314,11 +333,11 @@ void IBS::computeDistHist()
 
 }
 
-QVector<double> IBS::computePfhForSample( int sIdx, bool reverseNormal )
+std::vector<double> IBS::computePfhForSample( int sIdx, bool reverseNormal )
 {
 	int bNum = 125;
-	QVector<double> samplePFH(bNum, 0);
-	Vec3d n1 = samples[sIdx].n;
+	std::vector<double> samplePFH(bNum, 0);
+	Vector3d n1 = samples[sIdx].n;
 	if (reverseNormal)
 	{
 		n1 = -n1;
@@ -327,21 +346,23 @@ QVector<double> IBS::computePfhForSample( int sIdx, bool reverseNormal )
 	{
 		if (i != sIdx)
 		{
-			Vec3d n2 =  samples[i].n;
+			Vector3d n2 =  samples[i].n;
 			if (reverseNormal)
 			{
 				n2 = -n2;
 			}
-			Vec3d p1p2 = samples[i].pos - samples[sIdx].pos;
-			Vec3d v = p1p2.cross(n1).normalized();
-			Vec3d w = n1.cross(v).normalized();
-			Vec3d projected_n2 = Vec3d(w.dot(n2), n1.dot(n2), 0);
+			Vector3d p1p2 = samples[i].pos - samples[sIdx].pos;
+			Vector3d v = p1p2.cross(n1);
+			v = v / std::sqrt(v.squared_length());
+			Vector3d w = n1.cross(v);
+			w = w / std::sqrt(w.squared_length());
+			Vector3d projected_n2 = Vector3d(w * n2), n1 * n2), 0);
 
-			double phi = acos(n1.dot(p1p2) / p1p2.norm());
-			double alpha = acos(n2.dot(v));
+			double phi = acos(n1 * p1p2) / std::sqrt(p1p2.squared_length()));
+			double alpha = acos(n2 * v));
 
-			Vec3d local_e2(0,1,0);
-			double theta = acos(local_e2.dot(projected_n2)/ projected_n2.norm());
+			Vector3d local_e2(0,1,0);
+			double theta = acos(local_e2 * projected_n2)/ std::sqrt(projected_n2.squared_length());
 			double cross = local_e2[0]*projected_n2[1] - local_e2[1]*projected_n2[0];
 			if (cross < 0)
 			{
@@ -355,6 +376,7 @@ QVector<double> IBS::computePfhForSample( int sIdx, bool reverseNormal )
 			int alphaIdx = alpha / bWidth1;			// alpha \in [0, \pi]
 			int thetaIdx = theta / bWidth2;			// theta \in [0, 2*\pi]
 
+			// Each bin represents 1 combination of ranges for (alpha,theta,phi)
 			int bIdx = alphaIdx * 25 + thetaIdx * 5 + phiIdx;
 
 			samplePFH[bIdx]++;
@@ -369,29 +391,34 @@ QVector<double> IBS::computePfhForSample( int sIdx, bool reverseNormal )
 	return samplePFH;
 }
 
+
+//TODO
 void IBS::computeBettiNumbers()
 {
-	QTime t;
+	DebugTimer t;
 	t.start();
 
 	int positive, negative, positiveTri, negativeTri;
 	positive = negative = positiveTri = negativeTri = 0;
 
-	QVector< QVector<Edge> > complexEdgeIdx;
-	QVector<int> complexOpenEdgeNumber;
-	Surface_mesh::Edge_property<Integer> edgeComplexIdx = mesh->add_edge_property("e:complexIdx", -1);
+	std::vector< std::vector<Edge> > complexEdgeIdx;
+	std::vector<int> complexOpenEdgeNumber;
+	Mesh3d *mesh3d = ibsObj->getMesh().mesh3d;
+	EdgeProperty<int> edgeComplexIdx = mesh3d->add_property_map<Edge,int>("e:complexIdx", -1).first;
 
-	Surface_mesh::Halfedge_around_face_circulator feit, feend;
-	for(auto f:mesh->faces())
+	//CGAL::Halfedge_around_face_iterator<Mesh3d> feit, feend;
+	BOOST_FOREACH(Face f_id, mesh3d->faces())
 	{
-		QVector<Edge> consistingEdgeIdx;
+		std::vector<Edge> consistingEdgeIdx;
 
 		// find the complex idx for each edge
-		feit = feend = mesh->halfedges(f);
+		//Mesh3d::Halfedge_range range = mesh3d->halfedges(f_id);
+		//boost::tie(feit, feend) = CGAL::halfedges_around_face(mesh3d.halfedge(f_id),mesh3d);
+		CGAL::Halfedge_around_face_circulator<Mesh3d> feit(mesh3d.halfedge(f_id),mesh3d), feend(feit);
 		do 
 		{
-			Edge edge = mesh->edge(Halfedge(feit));
-			consistingEdgeIdx << edge;			
+			Edge edge = mesh->edge(*feit);
+			consistingEdgeIdx.push_back(edge);			
 
 			if (edgeComplexIdx[edge] != -1) 
 			{
@@ -402,18 +429,18 @@ void IBS::computeBettiNumbers()
 				int complexIdx = -1;
 
 				// if any of the end point has been used in previous checked edges, copy the corresponding complexID
-				QVector<int> vComplexIdx(2, -1);
+				std::vector<int> vComplexIdx(2, -1);
 				for (int vIdx=0; vIdx<2; vIdx++)
 				{
-					Vertex v = mesh->vertex(edge, vIdx);
+					Vertex v = mesh3d->vertex(edge, vIdx);
 
-					Surface_mesh::Halfedge_around_vertex_circulator vhit, vhend;
-					vhit = vhend = mesh->halfedges(v);
+					CGAL::Halfedge_around_source_circulator<Mesh3d> vhit(mesh3d.halfedge(v),mesh3d), vhend(vhit);
+					//vhit = vhend = mesh->halfedges(v);
 					do 
 					{
-						if (edgeComplexIdx[mesh->edge(vhit)] != -1)
+						if (edgeComplexIdx[mesh3d->edge(*vhit)] != -1)
 						{
-							vComplexIdx[vIdx] = edgeComplexIdx[mesh->edge(vhit)];
+							vComplexIdx[vIdx] = edgeComplexIdx[mesh3d->edge(*vhit)];
 							complexIdx = vComplexIdx[vIdx];
 							break;
 						}
@@ -453,7 +480,7 @@ void IBS::computeBettiNumbers()
 				}
 				else // create a new complex
 				{
-					QVector<Edge> newComplex;
+					std::vector<Edge> newComplex;
 					newComplex.push_back(edge);
 					edgeComplexIdx[edge] = complexEdgeIdx.size();
 					complexEdgeIdx.push_back(newComplex);
@@ -466,8 +493,10 @@ void IBS::computeBettiNumbers()
 		} while (++feit != feend);	
 
 		// If all three edges belong to the same complex and the complex has no open edge
-		QVector<int> triComplexIdx;
-		triComplexIdx << edgeComplexIdx[consistingEdgeIdx[0]] << edgeComplexIdx[consistingEdgeIdx[1]] << edgeComplexIdx[consistingEdgeIdx[2]];
+		std::vector<int> triComplexIdx;
+		triComplexIdx.push_back(edgeComplexIdx[consistingEdgeIdx[0]]);
+		triComplexIdx.push_back(edgeComplexIdx[consistingEdgeIdx[1]]);
+		triComplexIdx.push_back(edgeComplexIdx[consistingEdgeIdx[2]]);
 		if (triComplexIdx[0] == triComplexIdx[1] && triComplexIdx[0] == triComplexIdx[2] && complexOpenEdgeNumber[triComplexIdx[0]] == 0)
 		{
 			positiveTri ++;
@@ -491,7 +520,9 @@ void IBS::computeBettiNumbers()
 	{
 		if( complexOpenEdgeNumber[i] >= 0 ) 
 		{
-			qDebug() << "Complex " << complexNum++ << ": have " << complexOpenEdgeNumber[i] << "open edges";
+			std::stringstream ss;
+			ss >> "Complex " >> complexNum++ >> ": have " >> complexOpenEdgeNumber[i] >> "open edges";
+			DebugLogger::log(ss);
 
 			if (complexOpenEdgeNumber[i]>0 && complexOpenEdgeNumber[i] <= eThreshold)
 			{
@@ -500,7 +531,9 @@ void IBS::computeBettiNumbers()
 		}
 	}
 
-	qDebug("New code --- Time elapsed: %d ms", t.elapsed());
+	std::stringstream ss;
+	ss >> "New code --- Time elapsed: " >> t.getElapsedTime() >> " ms";
+	DebugLogger::log(ss);
 
 	//ignoreSmallHoles();
 }
@@ -509,12 +542,12 @@ void IBS::ignoreSmallHoles()
 {
 	Surface_mesh::Halfedge_property<bool> hvisisted = mesh->halfedge_property<bool>("h:visisted", false);
 
-	QVector< QVector<Halfedge> > holes;
+	std::vector< std::vector<Halfedge> > holes;
 	for (auto h:mesh->halfedges())
 	{
 		if( !mesh->is_boundary(h) || hvisisted[h] ) continue;
 
-		QVector<Halfedge> hole;
+		std::vector<Halfedge> hole;
 
 		Halfedge hinit = h;
 		h = mesh->next_halfedge(h);
@@ -555,12 +588,12 @@ void IBS::computeBettiNumbers2()
 	int positive, negative, positiveTri, negativeTri;
 	positive = negative = positiveTri = negativeTri = 0;
 
-	QVector< QVector<int> > Edges; // Unique edges (v1, v2, complex id, next edge in complex, number of triangles using this edge, edge idx)
-	QVector<int> Complexes; // Complexes created by edges, the index of latest edge added into the complex
-	QVector<int> ComplexOpenEdges; // Open edges for each complex, number of open edges in that complex
+	std::vector< std::vector<int> > Edges; // Unique edges (v1, v2, complex id, next edge in complex, number of triangles using this edge, edge idx)
+	std::vector<int> Complexes; // Complexes created by edges, the index of latest edge added into the complex
+	std::vector<int> ComplexOpenEdges; // Open edges for each complex, number of open edges in that complex
 	int TrigIDs[6] = {0,1,0,2,1,2}; // Vertex ID combinations, the i-th edge has two end points with idx TrigIDs[2*i] and TrigIDs[2*i+1]
 
-	QVector<int> tmpEdge; // Temporal edge vector
+	std::vector<int> tmpEdge; // Temporal edge vector
 	tmpEdge << -1 << -1 << -1 << -1 << 1 << 0;
 	int TriangleEdges[3]; // the 3 edge idx for this triangle
 	int tmpComplexID[2]; // Complex IDs for 2 vertices building up an edge
@@ -568,7 +601,7 @@ void IBS::computeBettiNumbers2()
 	Surface_mesh::Vertex_around_face_circulator fvit, fvend;
 	for(auto f:mesh->faces())
 	{
-		QVector<int> vIdx;
+		std::vector<int> vIdx;
 		fvit = fvend = mesh->vertices(f);
 		do{ vIdx.push_back(Vertex(fvit).idx()); } while (++fvit != fvend);
 
@@ -702,7 +735,7 @@ void IBS::computeBettiNumbers2()
 				bool SameTriangle = false;
 				for(int j=0; j<f.idx()-1; j++)
 				{
-					QVector<int> vIdx2;
+					std::vector<int> vIdx2;
 					fvit = fvend = mesh->vertices(Face(j));
 					do{ vIdx2.push_back(Vertex(fvit).idx()); } while (++fvit != fvend);
 
@@ -755,7 +788,7 @@ void IBS::computeBettiNumbers2()
 //////////////////////////////////////////////////////////////////////////
 // implementation for community features
 
-IBS::IBS(QVector<IBS*> ibsSet, QVector<bool> reverseNormal)
+IBS::IBS(std::vector<IBS*> ibsSet, std::vector<bool> reverseNormal)
 {
 	scene = ibsSet[0]->scene;
 	mesh = NULL;
@@ -790,7 +823,7 @@ IBS::IBS(QVector<IBS*> ibsSet, QVector<bool> reverseNormal)
 	}
 }
 
-QVector<double> IBS::combinedPFH(QVector<IBS*> ibsSet, QVector<bool> reverseNormal)
+std::vector<double> IBS::combinedPFH(std::vector<IBS*> ibsSet, std::vector<bool> reverseNormal)
 {
 	// sampling weight
 	double total = 0;
@@ -807,7 +840,7 @@ QVector<double> IBS::combinedPFH(QVector<IBS*> ibsSet, QVector<bool> reverseNorm
 	}
 
 	// compute distribution for each point, make sure normal points to the right direction
-	QVector< QVector<double> > hist;
+	std::vector< std::vector<double> > hist;
 	for (int ibsIdx=0; ibsIdx < ibsSet.size(); ibsIdx++)
 	{
 		for (int i=0; i<ibsSet[ibsIdx]->samples.size(); i++)
@@ -817,7 +850,7 @@ QVector<double> IBS::combinedPFH(QVector<IBS*> ibsSet, QVector<bool> reverseNorm
 	}
 
 	// compute PFH	
-	QVector<double> mean(hist[0].size(), 0);
+	std::vector<double> mean(hist[0].size(), 0);
 	for(int i=0; i<mean.size(); i++)
 	{
 		for (auto h:hist)
@@ -828,7 +861,7 @@ QVector<double> IBS::combinedPFH(QVector<IBS*> ibsSet, QVector<bool> reverseNorm
 		mean[i] /= hist.size();
 	}
 
-	QVector<double> diviation(hist[0].size(), 0);
+	std::vector<double> diviation(hist[0].size(), 0);
 	for(int i=0; i<diviation.size(); i++)
 	{
 		for (auto h:hist)
@@ -840,16 +873,16 @@ QVector<double> IBS::combinedPFH(QVector<IBS*> ibsSet, QVector<bool> reverseNorm
 		diviation[i] = sqrt(diviation[i]);
 	}
 
-	QVector<double> combinedPFH;
+	std::vector<double> combinedPFH;
 	combinedPFH << mean << diviation;	
 
 	return combinedPFH;
 }
 
-QVector<double> IBS::computePfhForSample(int ibsIdx, int sIdx, QVector<IBS*> ibsSet, QVector<bool> reverseNormal)
+std::vector<double> IBS::computePfhForSample(int ibsIdx, int sIdx, std::vector<IBS*> ibsSet, std::vector<bool> reverseNormal)
 {
 	int bNum = 125;
-	QVector<double> samplePFH(bNum, 0);
+	std::vector<double> samplePFH(bNum, 0);
 
 	Vec3d n1 = ibsSet[ibsIdx]->samples[sIdx].n;
 	if (reverseNormal[ibsIdx])
@@ -860,7 +893,7 @@ QVector<double> IBS::computePfhForSample(int ibsIdx, int sIdx, QVector<IBS*> ibs
 	int total = 0;
 	for (int k=0; k<ibsSet.size(); k++)
 	{
-		QVector<SamplePoint> ibsSamples = ibsSet[k]->samples;
+		std::vector<SamplePoint> ibsSamples = ibsSet[k]->samples;
 		total += ibsSamples.size();
 		for (int i=0; i<ibsSamples.size(); i++)
 		{
@@ -912,10 +945,10 @@ QVector<double> IBS::computePfhForSample(int ibsIdx, int sIdx, QVector<IBS*> ibs
 
 }
 
-QVector<double> IBS::combinedDirHist(QVector<IBS*> ibsSet, QVector<bool> reverseNormal)
+std::vector<double> IBS::combinedDirHist(std::vector<IBS*> ibsSet, std::vector<bool> reverseNormal)
 {
 	int n = ibsSet[0]->dirHist.size();
-	QVector<double> combinedDirHist(n, 0);
+	std::vector<double> combinedDirHist(n, 0);
 
 	for (int i=0; i<ibsSet.size(); i++)
 	{
@@ -941,9 +974,9 @@ QVector<double> IBS::combinedDirHist(QVector<IBS*> ibsSet, QVector<bool> reverse
 	return combinedDirHist;
 }
 
-QVector<double> IBS::combinedDistHist(QVector<IBS*> ibsSet)
+std::vector<double> IBS::combinedDistHist(std::vector<IBS*> ibsSet)
 {
-	QVector<double> combinedDistHist(ibsSet[0]->dirHist.size(), 0);
+	std::vector<double> combinedDistHist(ibsSet[0]->dirHist.size(), 0);
 
 	for (auto ibs : ibsSet)
 	{
@@ -961,8 +994,8 @@ QVector<double> IBS::combinedDistHist(QVector<IBS*> ibsSet)
 	return combinedDistHist;
 }
 
-QVector<int> IBS::combinedBettiNumber(QVector<IBS*> ibsSet)
+std::vector<int> IBS::combinedBettiNumber(std::vector<IBS*> ibsSet)
 {
-	QVector<int> combinedBettiNumber(ibsSet[0]->bettiNumbers.size(), 0);
+	std::vector<int> combinedBettiNumber(ibsSet[0]->bettiNumbers.size(), 0);
 	return combinedBettiNumber;
 }

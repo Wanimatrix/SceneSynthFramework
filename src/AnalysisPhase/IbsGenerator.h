@@ -14,6 +14,7 @@ Hu, Ruizhen, et al. "Interaction Context (ICON): Towards a Geometric Functionali
 // #include "Scene.h"
 #include "Qhull.h"
 #include "../Mesh.h"
+#include "../Debug/DebugTools.h"
 // #include "SubTreeSimilarity.h"
 
 class IbsGenerator
@@ -53,8 +54,10 @@ private:
 	std::vector< std::vector<int> > ibsRidgeIdxs;	// using objPair2IbsIdx to index this std::vector
 
 	std::vector< std::vector<int> > ridges;
-	std::vector< std::vector<int> > ridgeSitePair;
+	std::vector< int* > ridgeSitePair;
 
 	std::vector<int> sampleObjIdx;				//the corresponding objectIdx for each sample points
 	std::vector<int> sampleLocalIdx;
+
+	DebugTimer timer;
 };

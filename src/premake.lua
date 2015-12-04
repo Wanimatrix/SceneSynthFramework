@@ -2,13 +2,14 @@
 
 -- Solution
 solution "SceneSynthesisFramework"
-   configurations { "Debug", "Release" }
+   configurations { "Debug", "Profiler", "Release" }
 
    -- Project
    project "SceneSynth"
       kind "ConsoleApp"
       language "C++"
-      buildoptions { "-std=c++11" }
+      buildoptions { "-std=c++11 -fopenmp" }
+      linkoptions { "-fopenmp" }
       includedirs ("/usr/local/include")
       libdirs ("/usr/local/lib")
       files { "**.h", "**.cpp" }
@@ -63,6 +64,12 @@ solution "SceneSynthesisFramework"
          links ("CGAL")
 
       configuration "Debug"
+         defines { "DEBUG" }
+         flags { "Symbols" }
+
+      configuration "Profiler"
+         buildoptions {"-pg"}
+         linkoptions {"-pg -static"}
          defines { "DEBUG" }
          flags { "Symbols" }
 

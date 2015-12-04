@@ -1,0 +1,2 @@
+gprof ../bin/sceneSynth.exe | gprof2dot | dot -Tpng -o output.png
+imdisplay output.png &

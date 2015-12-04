@@ -11,7 +11,10 @@ typedef CGAL::Bbox_3 Bbox3d;
 typedef CGAL::Iso_cuboid_3<Kd> IsoCub3d;
 typedef Mesh3d::Face_index Face;
 typedef Mesh3d::Vertex_index Vertex;
+typedef Mesh3d::Edge_index Edge;
 template <typename T>
 using FaceProperty = Mesh3d::Property_map<Face,T>;
 template <typename T>
 using VertexProperty = Mesh3d::Property_map<Vertex,T>;
+template <typename T>
+using EdgeProperty = Mesh3d::Property_map<Edge,T>;

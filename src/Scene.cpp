@@ -1,4 +1,5 @@
 #include "Scene.h"
+#include <iostream>
 
 Scene::Scene() : objects() {}
 
@@ -42,6 +43,7 @@ void Scene::samplePoints() {
         {
             num = num * 2;
         }*/
+
         obj.sampling(num);
     }
 }
