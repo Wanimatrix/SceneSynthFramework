@@ -10,8 +10,8 @@
 using namespace std;
 
 int main() {
-    //string inputfile = "../../Data/Table_Chairs.blend";
-    string inputfile = "../../../../Data/SceneDB/table_cup.blend";
+    string inputfile = "../../Data/table_cup.blend";
+    // string inputfile = "../../../../Data/SceneDB/table_cup.blend";
 
     //Scene s = SceneLoader::load(inputfile);
 

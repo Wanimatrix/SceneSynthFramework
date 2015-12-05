@@ -2,12 +2,16 @@
 '''
 import bpy
 import os
+import platform
 
 # Load objects from scene file
 f = open(os.environ["SCENE_PATH"], 'r')
 for line in f:
     line = line.strip('\n')
-    spSplit = os.environ["SCENE_PATH"].split("\\")
+    if "Windows" in platform.system() or "CYGWIN" in platform.system():
+        spSplit = os.environ["SCENE_PATH"].split("\\")
+    else:
+        spSplit = os.environ["SCENE_PATH"].split("/")
 
     spSplit[-1]="objs/"+line
     line = "/".join(spSplit)

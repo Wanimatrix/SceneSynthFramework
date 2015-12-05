@@ -41,7 +41,7 @@ solution "SceneSynthesisFramework"
          -- includedirs (qhulldir .. "/src")
          libdirs (qhulldir .. "/lib")
          links ("qhullcpp")
-         --links ("qhullstatic_r")
+         -- links ("qhull_r")
 
          -- CGAL --
          cgaldir = libdir .. "/CGAL-4.7"
@@ -52,9 +52,12 @@ solution "SceneSynthesisFramework"
          links ("CGAL.dll")
          links ("CGAL_Core.dll")
 
+         -- qhulldir = "/usr/local"
+         -- includedirs (qhulldir .. "/include/libqhullcpp")
+         -- includedirs (qhulldir .. "/include/libqhull_r")
+         -- libdirs (qhulldir .. "/lib")
+         -- links ("qhullcpp")
          links ("qhull_r.dll")
-         -- links ("qhull.dll")
-         --links ("qhull_p.dll")
          postbuildcommands {"cp " .. assimpdir .. "/bin/cygassimp-3.dll ../bin"}
          postbuildcommands {"cp " .. qhulldir .. "/bin/*qhull*.dll ../bin"}
          postbuildcommands {"cp " .. cgaldir .. "/bin/cygCGAL* ../bin"}
@@ -62,6 +65,12 @@ solution "SceneSynthesisFramework"
       configuration "macosx"
          links ("assimp")
          links ("CGAL")
+         -- qhulldir = libdir .. "/qhull"
+         -- includedirs (qhulldir .. "/src/libqhullcpp")
+         -- includedirs (qhulldir .. "/src")
+         -- libdirs (qhulldir .. "/lib")
+         -- links ("qhullcpp")
+         links ("qhull_r")
 
       configuration "Debug"
          defines { "DEBUG" }

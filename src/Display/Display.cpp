@@ -3,6 +3,7 @@
 #include <iostream>
 #include <string>
 #include "writeOBJ.h"
+#include "../Debug/DebugTools.h"
 
 void Display::display(const std::vector<Object> &objects) {
     std::cout << "Start displaying ..." << std::endl;
@@ -18,6 +19,16 @@ void Display::display(const std::vector<Object> &objects) {
     file.close();
 
     // Start blender and show the scene with IBSes
-    system(("export SCENE_PATH=`cygpath.exe -aw "+std::string(TMP_PATH)+std::string(SCENE_PATH)+"` && \
-        blender `cygpath.exe -aw "+std::string(DISPLAY_PATH)+"clean.blend` -P `cygpath.exe -aw "+std::string(DISPLAY_PATH)+"displayBlender.py`").c_str());
+    std::string scenePath = std::string(TMP_PATH)+std::string(SCENE_PATH);
+    std::string cleanPath = std::string(DISPLAY_PATH)+"clean.blend";
+    std::string displayPYPath = std::string(DISPLAY_PATH)+"displayBlender.py";
+#ifdef WIN32
+    scenePath = "$(cygpath.exe -aw "+scenePath+")";
+    cleanPath = "$(cygpath.exe -aw "+cleanPath+")";
+    displayPYPath = "$(cygpath.exe -aw "+displayPYPath+")";
+#endif
+    std::stringstream ss;
+    ss << ("export SCENE_PATH="+scenePath+" && blender "+cleanPath+" -P "+displayPYPath).c_str();
+    DebugLogger::log(ss);
+    system(("export SCENE_PATH="+scenePath+" && blender "+cleanPath+" -P "+displayPYPath).c_str());
 }
