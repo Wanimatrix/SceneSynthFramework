@@ -10,6 +10,8 @@ Hu, Ruizhen, et al. "Interaction Context (ICON): Towards a Geometric Functionali
 #include "OrientHelper.h"
 #include <exception>
 #include <memory>
+#include <string>
+#include <sstream>
 
 // #include "UtilityGlobal.h"
 
@@ -49,13 +51,14 @@ void IbsGenerator::reset() {
 	sampleObjIdx.clear();
 	sampleLocalIdx.clear();
 
-	meshSet.clear();
+	// meshSet.clear();
+	ibsSet.clear();
 	objects.clear();
 }
 
-std::vector<Mesh> IbsGenerator::computeIBSForEachTwoObjs(std::vector<Object> objs)
+std::vector<std::shared_ptr<IBS>> IbsGenerator::computeIBSForEachTwoObjs(std::vector<std::shared_ptr<Object>> objs)
 {
-	std::vector<Mesh> result;
+	std::vector<std::shared_ptr<IBS>> result;
 	int i;
 	for (i = 0; i < objs.size(); ++i)
 	{
@@ -63,16 +66,16 @@ std::vector<Mesh> IbsGenerator::computeIBSForEachTwoObjs(std::vector<Object> obj
 		{
 			if (qhull) reset();
 			timer.start();
-			std::vector<Mesh> meshes = computeIBS(std::vector<Object>({objs[i],objs[j]}));
+			std::vector<std::shared_ptr<IBS>> ibses = computeIBS(std::vector<std::shared_ptr<Object>>({objs[i],objs[j]}));
 			timer.printElapsedTime("IBS");
-			result.insert(result.end(),meshes.begin(),meshes.end());
+			result.insert(result.end(),ibses.begin(),ibses.end());
 		}
 	}
 	
 	return result;
 }
 
-std::vector<Mesh> IbsGenerator::computeIBS(std::vector<Object> objs)
+std::vector<std::shared_ptr<IBS>> IbsGenerator::computeIBS(std::vector<std::shared_ptr<Object>> objs)
 {
 	// scene = s;
 	objects = objs;
@@ -81,8 +84,8 @@ std::vector<Mesh> IbsGenerator::computeIBS(std::vector<Object> objs)
 	findRidges();
 	buildIBS();
 
-	// return ibsSet;
-	return meshSet;
+	return ibsSet;
+	// return meshSet;
 }
 
 void IbsGenerator::computeVoronoi()
@@ -119,14 +122,16 @@ std::vector<Point3d> IbsGenerator::getInputForVoronoi()
 	sampleObjIdx.clear();
 	sampleLocalIdx.clear();
 	std::vector<Point3d> points;
+	std::vector<Object> objects2;
 
 	// 1. get the sample points on the objects
 	for (int i=0; i<objects.size(); i++)
 	{
-		Object obj = objects[i];
+		std::shared_ptr<Object> obj = objects[i];
+		objects2.push_back(*obj);
 
 		int idx = 0;
-		for (auto sample : obj.getSamples())
+		for (auto sample : obj->getSamples())
 		{
 			points.push_back(sample.pos);
 			sampleObjIdx.push_back(i);			// index the corresponding object index
@@ -144,7 +149,7 @@ std::vector<Point3d> IbsGenerator::getInputForVoronoi()
 	// 	}
 	// 	bbox.extend(obj->bbox);
 	// }
-	IsoCub3d bboxCuboid = IsoCub3d(CGAL::bbox_3(std::begin(objects),std::end(objects)));
+	IsoCub3d bboxCuboid = IsoCub3d(CGAL::bbox_3(std::begin(objects2),std::end(objects2)));
 
 	double radius = std::sqrt((bboxCuboid.max()-bboxCuboid.min()).squared_length()) * 2 / 3;
 	Point3d center = CGAL::midpoint(bboxCuboid.max(),bboxCuboid.min());
@@ -392,23 +397,32 @@ int IbsGenerator::findRidgesAroundVertex(vertexT *atvertex)
 
 void IbsGenerator::buildIBS()
 {
-	// ibsSet.clear();
-	meshSet.clear();
+	ibsSet.clear();
+	// meshSet.clear();
+	std::ostringstream sstr;
 	for (int i=0; i<ibsRidgeIdxs.size(); i++)
 	{
-		// IBS * ibs = new IBS(scene);
+		std::shared_ptr<IBS> ibs(new IBS(objects));
 
-		// // 1. set the corresponding pair of objects
-		// pair<int, int> objPair = objPair2IbsIdx.key(i);
-		// ibs->obj1 = objects[objPair.first];
-		// ibs->obj2 = objects[objPair.second];
+		// 1. set the corresponding pair of objects
+		std::pair<int, int> objPair;
+		for(auto t:objPair2IbsIdx)
+			if(t.second == i) {
+				objPair = t.first;
+				break;
+			}
+		// std::pair<int, int> objPair = objPair2IbsIdx.key(i);
+		ibs->obj1 = objects[objPair.first];
+		ibs->obj2 = objects[objPair.second];
 
-		// // 2. build the mesh & get the corresponding sample pairs
-		// ibs->mesh = buildIbsMesh(i, ibs->samplePairs);	
+		// 2. build the mesh & get the corresponding sample pairs
+		sstr << "ibs_" << ibs->obj1->getName() << "_" << ibs->obj2->getName();
+		ibs->ibsObj = std::shared_ptr<Object>(new Object(sstr.str(), buildIbsMesh(i, ibs->samplePairs)));	
 
-		// ibsSet.push_back(ibs);
-		std::vector<std::pair<int, int>> samplePairs;
-		meshSet.push_back(buildIbsMesh(i, samplePairs)); // ibs->samplePairs
+		// // ibsSet.push_back(ibs);
+		// std::vector<std::pair<int, int>> samplePairs;
+		// meshSet.push_back(buildIbsMesh(i, samplePairs)); // ibs->samplePairs
+		ibsSet.push_back(ibs);
 	}
 }
 
@@ -475,7 +489,7 @@ Mesh IbsGenerator::buildIbsMesh( int i,  std::vector<std::pair<int, int>>& sampl
 	int ridge_id = ibsRidgeIdxs[i][0];
 	int *pair = ridgeSitePair[ridge_id];
 	int sIdx = pair[1];
-	Point3d s2 = objects[sampleObjIdx[sIdx]].getSamples()[sampleLocalIdx[sIdx]].pos;
+	Point3d s2 = objects[sampleObjIdx[sIdx]]->getSamples()[sampleLocalIdx[sIdx]].pos;
 	Vector3d d = (s2 - center); // .normalized();
 	d = d / std::sqrt(d.squared_length());
 

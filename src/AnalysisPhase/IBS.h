@@ -6,26 +6,29 @@ Hu, Ruizhen, et al. "Interaction Context (ICON): Towards a Geometric Functionali
 
 #pragma once
 
-#include "SurfaceMeshModel.h"
+// #include "SurfaceMeshModel.h"
+#include "../types.h"
 #include "Sampler.h"
-#include "RenderObjectExt.h"
+#include "../Object.h"
+#include <vector>
+// #include "RenderObjectExt.h"
 
-class FuncRegion;
-class Scene;
-class Object;
-using namespace SurfaceMesh;
+// class FuncRegion;
+// class Scene;
+// class Object;
+//using namespace SurfaceMesh;
 
 class IBS
 {
 
 public:
 	IBS();
-	IBS(Scene *s);
-	IBS(std::vector<IBS*> ibsSet, std::vector<bool> reverseNormal);
+	IBS(const std::vector<std::shared_ptr<Object>> &objects);
+	IBS(std::vector<std::shared_ptr<IBS>> ibsSet, std::vector<bool> reverseNormal);
 	~IBS();
 
 public:
-	void draw(bool drawIbsSample = false, bool drawIbsWeight = false, QColor color = Qt::red);
+	// void draw(bool drawIbsSample = false, bool drawIbsWeight = false, QColor color = Qt::red);
 	void computeGeomFeatures();			// geometry features
 	void computeTopoFeatures();			// topology features
 	void computeSampleWeightForTri();
@@ -39,28 +42,29 @@ private:
 	std::vector<double> computePfhForSample(int sIdx, bool reverseNormal);
 
 	void computeBettiNumbers();
-	void computeBettiNumbers2();		// transfer original copy from Xi, extremely slow
-	void ignoreSmallHoles();
+	// void computeBettiNumbers2();		// transfer original copy from Xi, extremely slow
+	// void ignoreSmallHoles();
 
 	// implementation for community features
-	std::vector<double> combinedPFH(std::vector<IBS*> ibsSet, std::vector<bool> reverseNormal);
-	std::vector<double> computePfhForSample(int ibsIdx, int sIdx, std::vector<IBS*> ibsSet, std::vector<bool> reverseNormal);
-	std::vector<double> combinedDirHist(std::vector<IBS*> ibsSet, std::vector<bool> reverseNormal);
-	std::vector<double> combinedDistHist(std::vector<IBS*> ibsSet);
-	std::vector<int> combinedBettiNumber(std::vector<IBS*> ibsSet);
+	std::vector<double> combinedPFH(std::vector<std::shared_ptr<IBS>> ibsSet, std::vector<bool> reverseNormal);
+	std::vector<double> computePfhForSample(int ibsIdx, int sIdx, std::vector<std::shared_ptr<IBS>> ibsSet, std::vector<bool> reverseNormal);
+	std::vector<double> combinedDirHist(std::vector<std::shared_ptr<IBS>> ibsSet, std::vector<bool> reverseNormal);
+	std::vector<double> combinedDistHist(std::vector<std::shared_ptr<IBS>> ibsSet);
+	std::vector<int> combinedBettiNumber(std::vector<std::shared_ptr<IBS>> ibsSet);
 
 public:
 	//Scene *scene;
-	std::vector<Object *> objects;
-	FuncRegion* region;
+	std::vector<std::shared_ptr<Object>> objects;
+	IsoCub3d bboxCuboid;
+	// FuncRegion* region;
 	Vector3d upright;
 
-	Object * obj1;
-	Object * obj2; // normal points toward obj2 by default; for IBS beteween interacing object and central object, this is always the idx for the central object 
+	std::shared_ptr<Object> obj1;
+	std::shared_ptr<Object> obj2; // normal points toward obj2 by default; for IBS beteween interacing object and central object, this is always the idx for the central object 
 
 	bool pointToCentralObject; // true is objIdx2 is the central object (objIdx2 = ibsSetScene[i]->obj2-origIdx[0])
 
-	Object* ibsObj;	
+	std::shared_ptr<Object> ibsObj;	
 	std::vector<std::pair<int, int>> samplePairs;  // the pair of samples on the objects that corresponds the triangle
 
 	// importance-based sampling

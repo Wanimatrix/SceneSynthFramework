@@ -11,6 +11,6 @@
 class Display
 {
 public:
-    static void display(const std::vector<Object> &objects);
+    static void display(const std::vector<std::shared_ptr<Object>> &objects);
     
 };

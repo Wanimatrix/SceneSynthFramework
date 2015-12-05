@@ -14,7 +14,7 @@ solution "SceneSynthesisFramework"
       libdirs ("/usr/local/lib")
       files { "**.h", "**.cpp" }
 
-      excludes {"AnalysisPhase/IBS.*","AnalysisPhase/IBSConstraint*","Vertex*","Face*"}
+      excludes {"AnalysisPhase/IBSConstraint*","Vertex*","Face*"}
 
       -- Output
       targetdir ("../bin")

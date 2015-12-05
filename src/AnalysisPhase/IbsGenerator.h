@@ -10,7 +10,7 @@ Hu, Ruizhen, et al. "Interaction Context (ICON): Towards a Geometric Functionali
 #include <map>
 
 #include "../Object.h"
-// #include "IBS.h"
+#include "IBS.h"
 // #include "Scene.h"
 #include "Qhull.h"
 #include "../Mesh.h"
@@ -25,8 +25,8 @@ public:
 	~IbsGenerator();
 
 public:
-	std::vector<Mesh> computeIBSForEachTwoObjs(std::vector<Object> objs);
-	std::vector<Mesh> computeIBS(/*Scene * scene, */std::vector<Object> objects);
+	std::vector<std::shared_ptr<IBS>> computeIBSForEachTwoObjs(std::vector<std::shared_ptr<Object>> objects);
+	std::vector<std::shared_ptr<IBS>> computeIBS(/*Scene * scene, */std::vector<std::shared_ptr<Object>> objects);
 	void reset();
 
 private:
@@ -40,10 +40,10 @@ private:
 
 private:
 	// Scene *scene;
-	// std::vector<IBS*> ibsSet;
-	std::vector<Mesh> meshSet;
+	std::vector<std::shared_ptr<IBS>> ibsSet;
+	// std::vector<Mesh> meshSet;
 	//std::vector<int> activeObjIdx;		// useless, can be commented
-	std::vector<Object> objects;
+	std::vector<std::shared_ptr<Object>> objects;
 
 private:
 	orgQhull::Qhull *qhull;	

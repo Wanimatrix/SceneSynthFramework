@@ -60,7 +60,7 @@ void SceneLoader::recursive_scene_setup(Scene &scene, const aiScene *sc, const a
         aiMesh *mesh = sc->mMeshes[nd->mMeshes[n]];
         std::vector<std::string> splittedName;
         //boost::split(splittedName, std::string(mesh->mName.C_Str()), boost::is_any_of("_."));
-        Object o(/*splittedName[0], */mesh, newTrans);
+        std::shared_ptr<Object> o(new Object(/*splittedName[0], */mesh, newTrans));
         scene.addObject(o);
         //std::cout << "Mesh: " << mesh->mName.C_Str() << std::endl;
         //std::cout << "First  coordinate: (" << mesh->mVertices[0].x << "," << mesh->mVertices[0].y << "," << mesh->mVertices[0].z << ")" << std::endl;

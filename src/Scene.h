@@ -8,10 +8,10 @@ public:
     Scene();
     virtual ~Scene();
 
-    virtual void addObject(Object object);
-    virtual std::vector<Object> getObjects() const;
+    virtual void addObject(std::shared_ptr<Object> object);
+    virtual std::vector<std::shared_ptr<Object>> getObjects() const;
     virtual void samplePoints();
 
 private:
-    std::vector<Object> objects;
+    std::vector<std::shared_ptr<Object>> objects;
 };

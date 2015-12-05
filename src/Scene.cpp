@@ -3,13 +3,14 @@
 
 Scene::Scene() : objects() {}
 
-Scene::~Scene() {}
+Scene::~Scene() {
+}
 
-void Scene::addObject(Object object) {
+void Scene::addObject(std::shared_ptr<Object> object) {
     objects.push_back(object);
 }
 
-std::vector<Object> Scene::getObjects() const {
+std::vector<std::shared_ptr<Object>> Scene::getObjects() const {
     return objects;
 }
 
@@ -20,21 +21,21 @@ void Scene::samplePoints() {
     }
 
     // sample based on surface area
-    double minArea = objects[0].getMesh().getSurfaceArea();
+    double minArea = objects[0]->getMesh().getSurfaceArea();
     double totalArea = 0;
     for (auto obj:objects)
     {
-        if (obj.getMesh().getSurfaceArea() < minArea)
+        if (obj->getMesh().getSurfaceArea() < minArea)
         {
-            minArea = obj.getMesh().getSurfaceArea();
+            minArea = obj->getMesh().getSurfaceArea();
         }
-        totalArea += obj.getMesh().getSurfaceArea();
+        totalArea += obj->getMesh().getSurfaceArea();
     }
 
     int sampleNum = 2000 * objects.size();
-    for (auto&& obj:objects)
+    for (auto obj:objects)
     {
-        int num = sampleNum * obj.getMesh().getSurfaceArea() / totalArea;
+        int num = sampleNum * obj->getMesh().getSurfaceArea() / totalArea;
         if (num < 1000)
         {
             num = 1000;
@@ -44,6 +45,6 @@ void Scene::samplePoints() {
             num = num * 2;
         }*/
 
-        obj.sampling(num);
+        obj->sampling(num);
     }
 }

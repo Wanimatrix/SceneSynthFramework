@@ -4,9 +4,9 @@
 // DebugLogger
 // -----------
 #ifdef DEBUG
-    void DebugLogger::log(const std::stringstream &ss) {std::cout << ss.str() << std::endl;}
+    void DebugLogger::log(const std::ostringstream &ss) {std::cout << ss.str() << std::endl;}
 #else
-    void DebugLogger::log(const std::stringstream &ss) {}
+    void DebugLogger::log(const std::ostringstream &ss) {}
 #endif
 
 
@@ -20,7 +20,7 @@
         return timer.getElapsedTime();
     }
     void DebugTimer::printElapsedTime(const std::string &eventName) {
-        std::stringstream ss;
+        std::ostringstream ss;
         ss << "Elapsed time for " << eventName << ": " << timer.getElapsedTime();
         DebugLogger::log(ss);
     }
