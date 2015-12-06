@@ -40,10 +40,10 @@ bool Plotter::sameDebugFlag(bool flag) {
 
 void Plotter::plotHist(const std::vector<double> &histData, bool onDebug) {
     if(!sameDebugFlag(onDebug)) return;
-    gp << "set boxwidth 0.9 relative\n";
-    gp << "set style data histograms\n";
-    gp << "set style histogram cluster\n";
-    gp << "set style fill solid 1.0 border lt -1\n";
-    gp << "plot for [COL=2:4:2] 'histData' using COL\n";
-    gp.send1D(histData);
+    // gp << "set boxwidth 0.9 relative\n";
+    // gp << "set style data histograms\n";
+    // gp << "set style histogram cluster\n";
+    // gp << "set style fill solid 1.0 border lt -1\n";
+    gp << "plot 'histData' with histogram\n";
+    gp.send1d(histData);
 }

@@ -50,6 +50,12 @@ solution "SceneSynthesisFramework"
          gnuplotiosdir = libdir .. "/gnuplot-iostream"
          includedirs (gnuplotiosdir)
 
+         links ("boost_iostreams")
+         links ("boost_system")
+         -- links ("boost_device")
+         links ("boost_filesystem")
+         links ("util")
+
       configuration "windows"
          links ("assimp.dll")
          libdirs (cgaldir .. "/lib")
