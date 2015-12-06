@@ -33,17 +33,16 @@ private:
 #endif
 };
 
-// DebugPlotter
-// ----------
-class DebugPlotter
+// Plotter
+// -------
+class Plotter
 {
 public:
-    DebugPlotter() {}
-    virtual ~DebugPlotter() {}
+    Plotter(bool debug) : debug(debug) {}
+    virtual ~Plotter() {}
 
-    virtual void plotHist(std::vector<double> histogram);
+    virtual void plotHist(const std::vector<double> &histogram);
 private:
-#ifdef DEBUG
-    Timer timer;
-#endif
+    bool debug;
+    Gnuplot gp;
 };

@@ -46,6 +46,10 @@ solution "SceneSynthesisFramework"
          -- CGAL --
          cgaldir = libdir .. "/CGAL-4.7"
 
+         -- GNUPLOT-IOSTREAM --
+         gnuplotiosdir = libdir .. "/gnuplot-iostream"
+         includedirs (gnuplotiosdir)
+
       configuration "windows"
          links ("assimp.dll")
          libdirs (cgaldir .. "/lib")
