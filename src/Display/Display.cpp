@@ -22,13 +22,12 @@ void Display::display(const std::vector<std::shared_ptr<Object>> &objects) {
     std::string scenePath = std::string(TMP_PATH)+std::string(SCENE_PATH);
     std::string cleanPath = std::string(DISPLAY_PATH)+"clean.blend";
     std::string displayPYPath = std::string(DISPLAY_PATH)+"displayBlender.py";
-#ifdef WIN32
+#ifdef __CYGWIN__
     scenePath = "$(cygpath.exe -aw "+scenePath+")";
     cleanPath = "$(cygpath.exe -aw "+cleanPath+")";
     displayPYPath = "$(cygpath.exe -aw "+displayPYPath+")";
 #endif
-    std::ostringstream ss;
-    ss << ("export SCENE_PATH="+scenePath+" && blender "+cleanPath+" -P "+displayPYPath).c_str();
-    DebugLogger::log(ss);
+    DebugLogger::ss << ("export SCENE_PATH="+scenePath+" && blender "+cleanPath+" -P "+displayPYPath).c_str();
+    DebugLogger::log();
     system(("export SCENE_PATH="+scenePath+" && blender "+cleanPath+" -P "+displayPYPath).c_str());
 }

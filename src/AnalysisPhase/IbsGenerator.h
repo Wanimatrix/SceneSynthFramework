@@ -26,6 +26,7 @@ public:
 
 public:
 	std::vector<std::shared_ptr<IBS>> computeIBSForEachTwoObjs(std::vector<std::shared_ptr<Object>> objects);
+	std::vector<std::shared_ptr<IBS>> computeIBSBetweenTwoSets(std::vector<std::shared_ptr<Object>> objs1, std::vector<std::shared_ptr<Object>> objs2);
 	std::vector<std::shared_ptr<IBS>> computeIBS(/*Scene * scene, */std::vector<std::shared_ptr<Object>> objects);
 	void reset();
 

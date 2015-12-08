@@ -2,13 +2,13 @@
 
 -- Solution
 solution "SceneSynthesisFramework"
-   configurations { "Debug", "Profiler", "Release" }
+   configurations { "DebugNoSymbols", "DebugSymbols", "Timer", "Profiler", "Release" }
 
    -- Project
    project "SceneSynth"
       kind "ConsoleApp"
       language "C++"
-      buildoptions { "-std=c++11 -fopenmp" }
+      buildoptions { "-std=c++11 -U__STRICT_ANSI__ -fopenmp" }
       linkoptions { "-fopenmp" }
       includedirs ("/usr/local/include")
       libdirs ("/usr/local/lib")
@@ -49,7 +49,6 @@ solution "SceneSynthesisFramework"
          -- GNUPLOT-IOSTREAM --
          gnuplotiosdir = libdir .. "/gnuplot-iostream"
          includedirs (gnuplotiosdir)
-
          links ("boost_iostreams")
          links ("boost_system")
          -- links ("boost_device")
@@ -82,15 +81,23 @@ solution "SceneSynthesisFramework"
          -- links ("qhullcpp")
          links ("qhull_r")
 
-      configuration "Debug"
-         defines { "DEBUG" }
+      configuration "DebugNoSymbols"
+         defines { "DEBUG", "NOSYMBOLS" }
+         flags { "Optimize" }
+
+      configuration "DebugSymbols"
+         defines { "DEBUG", "SYMBOLS"}
          flags { "Symbols" }
 
       configuration "Profiler"
          buildoptions {"-pg"}
          linkoptions {"-pg -static"}
-         defines { "DEBUG" }
-         flags { "Symbols" }
+         defines { "DEBUG", "NOSYMBOLS", "PROFILER" }
+         flags { "Optimize" }
+
+      configuration "Timer"
+         defines { "DEBUG", "NOSYMBOLS", "PERFTIMER" }
+         flags { "Optimize" }
 
       configuration "Release"
          defines { "NDEBUG" }

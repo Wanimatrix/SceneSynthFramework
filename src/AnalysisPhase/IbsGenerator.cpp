@@ -75,6 +75,25 @@ std::vector<std::shared_ptr<IBS>> IbsGenerator::computeIBSForEachTwoObjs(std::ve
 	return result;
 }
 
+std::vector<std::shared_ptr<IBS>> IbsGenerator::computeIBSBetweenTwoSets(std::vector<std::shared_ptr<Object>> objs1, std::vector<std::shared_ptr<Object>> objs2)
+{
+	std::vector<std::shared_ptr<IBS>> result;
+	int i;
+	for (i = 0; i < objs1.size(); ++i)
+	{
+		for (int j = 0; j < objs2.size(); ++j)
+		{
+			if (qhull) reset();
+			timer.start();
+			std::vector<std::shared_ptr<IBS>> ibses = computeIBS(std::vector<std::shared_ptr<Object>>({objs1[i],objs2[j]}));
+			timer.printElapsedTime("IBS");
+			result.insert(result.end(),ibses.begin(),ibses.end());
+		}
+	}
+	
+	return result;
+}
+
 std::vector<std::shared_ptr<IBS>> IbsGenerator::computeIBS(std::vector<std::shared_ptr<Object>> objs)
 {
 	// scene = s;
@@ -83,6 +102,9 @@ std::vector<std::shared_ptr<IBS>> IbsGenerator::computeIBS(std::vector<std::shar
 	computeVoronoi();
 	findRidges();
 	buildIBS();
+
+	DebugLogger::ss << "IBS calculated ..." << std::endl;
+	DebugLogger::log();
 
 	return ibsSet;
 	// return meshSet;
@@ -236,9 +258,6 @@ void IbsGenerator::findRidges()
 
 	int totcount = 0;
 	objPair2IbsIdx.clear();
-
-	std::cout << "Amount ridges: " << qh->ridgeoutnum << std::endl;
-
 
 	FOREACHvertex_i_(qhull->qh(),vertices) 
 	{

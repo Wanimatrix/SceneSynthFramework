@@ -6,6 +6,7 @@ Hu, Ruizhen, et al. "Interaction Context (ICON): Towards a Geometric Functionali
 
 #include "IBS.h"
 #include "../Debug/DebugTools.h"
+#include <Eigen/Dense>
 // #include "Scene.h"
 //#include "QuickMeshDraw.h"
 //#include "RenderObjectExt.h"
@@ -25,6 +26,7 @@ IBS::IBS()
 	bettiNumbers.push_back(0);
 	bettiNumbers.push_back(0);
 	bettiNumbers.push_back(0);
+	upright = Vector3d(0,0,1);
 }
 
 
@@ -46,10 +48,61 @@ IBS::IBS(const std::vector<std::shared_ptr<Object>> &objects)
 	bettiNumbers.push_back(0);
 	bettiNumbers.push_back(0);
 	bettiNumbers.push_back(0);
+	upright = Vector3d(0,0,1);
 }
 
 IBS::~IBS()
 {
+}
+
+void IBS::plotFeatures() {
+	Plotter::newMultiWindow(2,2,std::string("IBS features"));
+    Plotter::plotHist(pfh,"PFH");
+    Plotter::plotHist(dirHist,"DIR");
+    Plotter::plotHist(distHist,"DIST");
+    Plotter::plotHist(std::vector<double>({
+    	static_cast<double>(bettiNumbers[0]),
+    	static_cast<double>(bettiNumbers[1]),
+    	static_cast<double>(bettiNumbers[2])}),"BETTI");
+}
+
+double IBS::getSimilarity(const IBS &other, bool w, double a, double b, double c) {
+	assert(a+b+c == 1);
+	assert(pfh.size() == 250);
+	assert(dirHist.size() == 10);
+	assert(distHist.size() == 10);
+
+	bool topoSame = false;
+	if(w) {
+		topoSame = bettiNumbers[0] == other.bettiNumbers[0];
+		topoSame = topoSame && bettiNumbers[1] == other.bettiNumbers[1];
+		topoSame = topoSame && bettiNumbers[2] == other.bettiNumbers[2];
+	}
+
+	Eigen::Map<const Eigen::VectorXd> thisPfh(pfh.data(),pfh.size());
+	Eigen::Map<const Eigen::VectorXd> otherPfh(other.pfh.data(),other.pfh.size());
+
+	Eigen::Map<const Eigen::VectorXd> thisDir(dirHist.data(),dirHist.size());
+	Eigen::Map<const Eigen::VectorXd> otherDir(other.dirHist.data(),other.dirHist.size());
+
+	Eigen::Map<const Eigen::VectorXd> thisDist(distHist.data(),distHist.size());
+	Eigen::Map<const Eigen::VectorXd> otherDist(other.distHist.data(),other.distHist.size());
+
+	/*Eigen::Map<const Eigen::VectorXd> pfhDiff = Eigen::Map<const Eigen::VectorXd>(thisPfh-otherPfh);
+	Eigen::Map<const Eigen::VectorXd> dirDiff = (thisDir-otherDir);
+	Eigen::Map<const Eigen::VectorXd> distDiff = (thisDist-otherDist);*/
+
+	double l1Pfh = (thisPfh-otherPfh).cwiseAbs().sum();
+	double l1Dist = (thisDir-otherDir).cwiseAbs().sum();
+	double l1Dir = (thisDist-otherDist).cwiseAbs().sum();
+
+	std::cout << thisPfh.sum() << " " << otherPfh.sum() << std::endl;
+
+	std::cout << l1Pfh << " " << l1Dist << " " << l1Dir << std::endl;
+
+	double geoDist = a * l1Pfh + b * l1Dir + c * l1Dist;
+
+	return w ? static_cast<int>(topoSame) * (1 - geoDist) : (1 - geoDist);
 }
 
 /*void IBS::draw(	bool drawIbsSample, bool drawIbsWeight, QColor color)
@@ -112,7 +165,12 @@ IBS::~IBS()
 void IBS::computeSampleWeightForTri()			// according to Xi's IBS paper
 {
 	Mesh mesh = ibsObj->getMesh();
-	FaceProperty<double> fweight = mesh.getFaceProperty<double>("weight");
+	FaceProperty<double> fweight;
+	bool exists;
+	boost::tie(fweight, exists) = mesh.mesh3d->property_map<Face,double>("f:weight");
+	if(exists) return;
+	else 
+		fweight = mesh.mesh3d->add_property_map<Face,double>("f:weight", 0).first;
 	// if (fweight.is_valid()) // TODO
 	// {
 	// 	return;
@@ -151,6 +209,7 @@ void IBS::computeSampleWeightForTri()			// according to Xi's IBS paper
 
 		Vector3d d = s - center;
 		Vector3d n = fnormal[f_id];
+		n = n / std::sqrt(n.squared_length());
 
 		double dist = std::sqrt(d.squared_length());
 		double angle = std::acos((d * n) / dist);	
@@ -287,8 +346,8 @@ void IBS::computeDirHist()
 		{
 			n = -n;
 		}
-
-		double angle = acos(upright * n);
+		n = n / std::sqrt(n.squared_length());
+		double angle = std::acos(upright * n);
 
 		int bIdx = angle / PI * 10;
 		bIdx = (bIdx > 9)? 9:bIdx;
@@ -350,6 +409,7 @@ std::vector<double> IBS::computePfhForSample( int sIdx, bool reverseNormal )
 	{
 		n1 = -n1;
 	}
+	n1 = n1 / std::sqrt(n1.squared_length());
 	for (int i=0; i<samples.size(); i++)
 	{
 		if (i != sIdx)
@@ -359,6 +419,7 @@ std::vector<double> IBS::computePfhForSample( int sIdx, bool reverseNormal )
 			{
 				n2 = -n2;
 			}
+			n2 = n2 / std::sqrt(n2.squared_length());
 			Vector3d p1p2 = samples[i].pos - samples[sIdx].pos;
 			Vector3d v = CGAL::cross_product(p1p2,n1);
 			v = v / std::sqrt(v.squared_length());
@@ -366,11 +427,11 @@ std::vector<double> IBS::computePfhForSample( int sIdx, bool reverseNormal )
 			w = w / std::sqrt(w.squared_length());
 			Vector3d projected_n2 = Vector3d(w * n2, n1 * n2, 0);
 
-			double phi = acos(n1 * p1p2) / std::sqrt(p1p2.squared_length());
-			double alpha = acos(n2 * v);
+			double phi = std::acos((n1 * p1p2) / std::sqrt(p1p2.squared_length()));
+			double alpha = std::acos(n2 * v);
 
 			Vector3d local_e2(0,1,0);
-			double theta = acos(local_e2 * projected_n2)/ std::sqrt(projected_n2.squared_length());
+			double theta = std::acos((local_e2 * projected_n2)/std::sqrt(projected_n2.squared_length()));
 			double cross = local_e2[0]*projected_n2[1] - local_e2[1]*projected_n2[0];
 			if (cross < 0)
 			{
@@ -530,9 +591,9 @@ void IBS::computeBettiNumbers()
 	{
 		if( complexOpenEdgeNumber[i] >= 0 ) 
 		{
-			std::ostringstream ss;
-			ss << "Complex " << complexNum++ << ": have " << complexOpenEdgeNumber[i] << "open edges";
-			DebugLogger::log(ss);
+			
+			DebugLogger::ss << "Complex " << complexNum++ << ": have " << complexOpenEdgeNumber[i] << "open edges";
+			DebugLogger::log();
 
 			if (complexOpenEdgeNumber[i]>0 && complexOpenEdgeNumber[i] <= eThreshold)
 			{
@@ -541,9 +602,8 @@ void IBS::computeBettiNumbers()
 		}
 	}
 
-	std::ostringstream ss;
-	ss << "New code --- Time elapsed: " << t.getElapsedTime() << " ms";
-	DebugLogger::log(ss);
+	DebugLogger::ss << "New code --- Time elapsed: " << t.getElapsedTime() << " ms";
+	DebugLogger::log();
 
 	//ignoreSmallHoles();
 }
@@ -901,7 +961,7 @@ std::vector<double> IBS::computePfhForSample(int ibsIdx, int sIdx, std::vector<s
 	{
 		n1 = -n1;
 	}
-
+	n1 = n1 / std::sqrt(n1.squared_length());
 	int total = 0;
 	for (int k=0; k<ibsSet.size(); k++)
 	{
@@ -916,6 +976,7 @@ std::vector<double> IBS::computePfhForSample(int ibsIdx, int sIdx, std::vector<s
 				{
 					n2 = -n2;
 				}
+				n2 = n2 / std::sqrt(n2.squared_length());
 				Vector3d p1p2 = ibsSamples[i].pos - ibsSet[ibsIdx]->samples[sIdx].pos;
 
 				Vector3d v = CGAL::cross_product(p1p2,n1);
@@ -924,11 +985,11 @@ std::vector<double> IBS::computePfhForSample(int ibsIdx, int sIdx, std::vector<s
 				w = w / std::sqrt(w.squared_length());
 				Vector3d projected_n2 = Vector3d(w * n2, n1 * n2, 0);
 
-				double phi = acos(n1 * p1p2) / std::sqrt(p1p2.squared_length());
-				double alpha = acos(n2 * v);
+				double phi = std::acos((n1 * p1p2) / std::sqrt(p1p2.squared_length()));
+				double alpha = std::acos(n2 * v);
 
 				Vector3d local_e2(0,1,0);
-				double theta = acos(local_e2 * projected_n2)/ std::sqrt(projected_n2.squared_length());
+				double theta = std::acos((local_e2 * projected_n2)/ std::sqrt(projected_n2.squared_length()));
 				double cross = local_e2[0]*projected_n2[1] - local_e2[1]*projected_n2[0];
 				if (cross < 0)
 				{
