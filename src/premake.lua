@@ -16,6 +16,20 @@ solution "SceneSynthesisFramework"
 
       excludes {"AnalysisPhase/IBSConstraint*","Vertex*","Face*"}
 
+      -- newoption {
+      --    trigger     = "exps",
+      --    value = "experimentNumbers (eg. 1,2,6,10,15)",
+      --    description = "Run experiments instead of original main function."
+      -- }
+
+      -- if _OPTIONS["exps"] then
+      --    defines { "EXP=" .. _OPTIONS["exps"] }
+      -- end
+
+      -- exps = ""
+      --defines { "EXP=$(exps)" }
+      --prelinkcommands { "ifdef exps\n DEFINES += -DEXP=$(exps)\n endif" }
+
       -- Output
       targetdir ("../bin")
       targetname ("sceneSynth")
@@ -81,24 +95,24 @@ solution "SceneSynthesisFramework"
          -- links ("qhullcpp")
          links ("qhull_r")
 
-      configuration "DebugNoSymbols"
-         defines { "DEBUG", "NOSYMBOLS" }
-         flags { "Optimize" }
-
       configuration "DebugSymbols"
          defines { "DEBUG", "SYMBOLS"}
          flags { "Symbols" }
 
+      configuration {"not DebugSymbols"}
+         defines { "NOSYMBOLS" }
+         flags { "Optimize" }
+
+      configuration {"not Release"}
+         defines { "DEBUG" }
+
       configuration "Profiler"
          buildoptions {"-pg"}
          linkoptions {"-pg -static"}
-         defines { "DEBUG", "NOSYMBOLS", "PROFILER" }
-         flags { "Optimize" }
+         defines { "PROFILER" }
 
       configuration "Timer"
-         defines { "DEBUG", "NOSYMBOLS", "PERFTIMER" }
-         flags { "Optimize" }
+         defines { "PERFTIMER" }
 
       configuration "Release"
          defines { "NDEBUG" }
-         flags { "Optimize" }

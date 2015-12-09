@@ -1,3 +1,5 @@
+#ifndef EXP
+
 #include <iostream>
 #include <string>
 #include <sstream>
@@ -10,7 +12,15 @@
 
 using namespace std;
 
+
+
 int main() {
+
+    #ifdef config
+    #define to_str(x) #x
+    std::cout << to_str(config)
+    #endif
+
     /*Plotter p(true);
     p.plotHist(std::vector<double>({1,6,3,7,4}),true);*/
 
@@ -34,37 +44,23 @@ int main() {
     }
 
     s.samplePoints();
-    //IbsGenerator ibsGen;
+    IbsGenerator ibsGen;
 
     //std::vector<std::shared_ptr<IBS>> ibses = ibsGen.computeIBSForEachTwoObjs(s.getObjects());
-    //std::vector<std::shared_ptr<IBS>> ibses = ibsGen.computeIBSBetweenTwoSets(set1, set2);
-
-    std::vector<std::shared_ptr<IBS>> result;
-    int i;
-    //#pragma omp parallel for
-    for (i = 0; i < set1.size(); ++i)
-    {
-        IbsGenerator ibsGen;
-        for (int j = 0; j < set2.size(); ++j)
-        {
-            
-            //timer.start();
-            std::vector<std::shared_ptr<IBS>> ibses = ibsGen.computeIBS(std::vector<std::shared_ptr<Object>>({set1[i],set2[j]}));
-            //timer.printElapsedTime("IBS");
-            #pragma omp critical
-            result.insert(result.end(),ibses.begin(),ibses.end());
-            ibsGen.reset();
-        }
-    }
+    std::vector<std::shared_ptr<IBS>> ibses = ibsGen.computeIBSBetweenTwoSets(set1, set2);
 
     vector<std::shared_ptr<Object>> objects = s.getObjects();
-    for(auto ibs:result) {
+    #pragma omp parallel for
+    for(int i = 0; i < ibses.size(); i++) {
+        auto ibs = ibses[i];
         ibs->computeGeomFeatures();
         ibs->computeTopoFeatures();
         //ibs->plotFeatures();
+        #pragma omp critical
         objects.push_back(ibs->ibsObj);
-    }/*
+    }
 
+    /*
     for (int i = 0; i < ibses.size(); ++i)
     {
         for (int j = i; j < ibses.size(); ++j) {
@@ -77,3 +73,5 @@ int main() {
 
     return 0;
 }
+
+#endif

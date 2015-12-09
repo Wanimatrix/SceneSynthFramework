@@ -280,6 +280,9 @@ void IBS::computeGeomFeatures()
 	computePFH();
 	computeDirHist();
 	computeDistHist();
+
+	DebugLogger::ss << "Geometric features calculated ...";
+	DebugLogger::log();
 }
 
 void IBS::computeTopoFeatures()
@@ -288,7 +291,8 @@ void IBS::computeTopoFeatures()
 	// {
 		computeBettiNumbers();
 	// }
-	
+	DebugLogger::ss << "Topological features calculated ...";
+	DebugLogger::log();
 }
 
 void IBS::computePFH()

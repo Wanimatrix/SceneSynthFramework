@@ -5,10 +5,8 @@
 #include "writeOBJ.h"
 #include "../Debug/DebugTools.h"
 
-void Display::display(const std::vector<std::shared_ptr<Object>> &objects) {
+void Display::display(const std::vector<std::shared_ptr<Object>> &objects, const std::string &save, bool display) {
     std::cout << "Start displaying ..." << std::endl;
-
-    //TODO fix this hardcoded thing!
 
     // Write all objects to obj and write their path in scene file
     std::ofstream file(std::string(TMP_PATH)+SCENE_PATH, std::ofstream::trunc);
@@ -27,7 +25,8 @@ void Display::display(const std::vector<std::shared_ptr<Object>> &objects) {
     cleanPath = "$(cygpath.exe -aw "+cleanPath+")";
     displayPYPath = "$(cygpath.exe -aw "+displayPYPath+")";
 #endif
-    DebugLogger::ss << ("export SCENE_PATH="+scenePath+" && blender "+cleanPath+" -P "+displayPYPath).c_str();
+    DebugLogger::ss << "export SCENE_PATH=" << scenePath << std::string((save == "") ? "" : " SAVE=") << save << " && blender " << std::string(display ? "" : "-b ") << cleanPath << " -P " << displayPYPath;
+    std::string command = DebugLogger::ss.str();
     DebugLogger::log();
-    system(("export SCENE_PATH="+scenePath+" && blender "+cleanPath+" -P "+displayPYPath).c_str());
+    system(command.c_str());
 }
