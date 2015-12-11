@@ -26,9 +26,8 @@ std::ostringstream DebugLogger::ss;
         return timer.getElapsedTime();
     }
     void DebugTimer::printElapsedTime(const std::string &eventName) {
-        std::ostringstream ss;
-        ss << "Elapsed time for " << eventName << ": " << timer.getElapsedTime();
-        DebugLogger::log(ss);
+        DebugLogger::ss << "Elapsed time for " << eventName << ": " << timer.getElapsedTime();
+        DebugLogger::log();
     }
 #else
     void DebugTimer::start() {}
@@ -109,17 +108,20 @@ void Plotter::setWindowTitle(const std::string &windowTitle) {
      gp << "set term png title \"{/:Bold=15 " << windowTitle << "}\"";
 }
 
-void Plotter::newWindow(const std::string &windowTitle = std::string("")) {
+void Plotter::newWindow(const std::string &windowTitle, const std::string &savePath) {
     gp << "set term png\n";
     ++windowIdx;
-    gp << "set output '| display png:-'\n";
+    if(savePath == std::string(""))
+        gp << "set output '| display png:-'\n";
+    else
+        gp << "set output '" << savePath << "'\n";
     gp << "set key font \",10\"\n";
     //gp << "set term png " <<  << "\n";
     //gp << "set term png enhanced font \"arial,15\"\n";
     if(windowTitle != std::string("")) setWindowTitle(windowTitle);
 }
 
-void Plotter::newMultiWindow(int width, int height, const std::string &windowTitle, int numGraphs) {
-    newWindow(std::string(""));
+void Plotter::newMultiWindow(int width, int height, const std::string &windowTitle, const std::string &savePath, int numGraphs) {
+    newWindow(std::string(""),savePath);
     multiWindow(width, height, numGraphs, windowTitle);
 }

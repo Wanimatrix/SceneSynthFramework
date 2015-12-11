@@ -41,8 +41,8 @@ class Plotter
 {
 public:
     static void plotHist(const std::vector<double> &histData, const std::string &plotTitle = std::string(""));
-    static void newWindow(const std::string &windowTitle);
-    static void newMultiWindow(int width, int height, const std::string &windowTitle = std::string(""), int numGraphs = -1);
+    static void newWindow(const std::string &windowTitle, const std::string &savePath = std::string(""));
+    static void newMultiWindow(int width, int height, const std::string &windowTitle = std::string(""), const std::string &savePath = std::string(""), int numGraphs = -1);
 private:
     static Gnuplot gp;
     static int windowIdx;
