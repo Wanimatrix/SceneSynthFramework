@@ -12,6 +12,7 @@ Hu, Ruizhen, et al. "Interaction Context (ICON): Towards a Geometric Functionali
 #include <memory>
 #include <string>
 #include <sstream>
+#include <fstream>
 
 // #include "UtilityGlobal.h"
 
@@ -90,7 +91,7 @@ std::vector<std::shared_ptr<IBS>> IbsGenerator::computeIBSBetweenTwoSets(std::ve
             result.insert(result.end(),ibses.begin(),ibses.end());
         }
     }
-    
+ 
     return result;
 }
 
@@ -110,22 +111,63 @@ std::vector<std::shared_ptr<IBS>> IbsGenerator::computeIBS(std::vector<std::shar
     // return meshSet;
 }
 
+int global_ibsCounter = 0;
+
+void IbsGenerator::computeVoronoiCGAL()
+{
+    std::vector<Point3d> points = getInputForVoronoi();
+    std::vector<Triangulation::Point> pointCoords;
+
+    for(int i = 0; i < points.size(); i++) {
+        pointCoords.push_back(toK(points[i]));
+    }
+
+    // use Qhull to create Voronoi diagram
+    //if(!qhull) qhull = new orgQhull::Qhull("", 3, (int)points.size(), pointCoords.data(), "v");
+    //else throw std::invalid_argument( "qhull was already initialized!" );
+
+    T = new Triangulation(pointCoords.begin(),pointCoords.end());
+    Triangulation::Finite_cells_iterator cit;
+
+    voronoiVertices.push_back(Point3d(0, 0, 0)); // the index of vertices start from 1, 0 is for the infinite one
+    for (cit = T->finite_cells_begin(); cit != T->finite_cells_end(); ++cit)
+        voronoiVertices.push_back(toKd(T->dual(cit)));
+    //for ( orgQhull::QhullFacet facet = qhull->firstFacet(); facet != qhull->endFacet(); facet=facet.next() )
+    //{
+        //orgQhull::QhullPoint p = facet.voronoiVertex();
+        //voronoiVertices.push_back(Point3d(p[0], p[1], p[2]));
+    //}
+
+}
+
 void IbsGenerator::computeVoronoi()
 {
     std::vector<Point3d> points = getInputForVoronoi();
     std::vector<double> pointCoords;
 
+    //std::stringstream sstr;
+    //sstr << "../../Data/Experiments/0/ibs_" << global_ibsCounter++ << "_data.txt";
+    //std::fstream out(sstr.str(),std::ios::out);
+    //if (!out.is_open())
+    //{
+        //DebugLogger::ss << "File " << sstr.str() << " could not be opened.";
+        //DebugLogger::log();
+    //}
+    //out << 3 << std::endl << points.size() << std::endl;
+
     for(int i = 0; i < points.size()*3; i+=3) {
         pointCoords.push_back(points[i/3].x());
         pointCoords.push_back(points[i/3].y());
         pointCoords.push_back(points[i/3].z());
+        //out << points[i/3].x() << " " << points[i/3].y() << " " << points[i/3].z() << std::endl;
     }
+    //out.close();
 
     // use Qhull to create Voronoi diagram
     if(!qhull) qhull = new orgQhull::Qhull("", 3, (int)points.size(), pointCoords.data(), "v");
     else throw std::invalid_argument( "qhull was already initialized!" );
     //qhull->runQhull("", 3, (int)points.size(), pointCoords.data(), "v");
-    
+ 
     voronoiVertices.push_back(Point3d(0, 0, 0)); // the index of vertices start from 1, 0 is for the infinite one
     for ( orgQhull::QhullFacet facet = qhull->firstFacet(); facet != qhull->endFacet(); facet=facet.next() )
     {
@@ -293,28 +335,40 @@ int IbsGenerator::findRidgesAroundVertex(vertexT *atvertex)
     qhull->qh()->vertex_visit++;
     atvertex->seen= True;
     if (visitall) {
+        DebugLogger::ss << "Visiting all?";
+        DebugLogger::log();
         qhT *qh = qhull->qh();
         FORALLvertices
             vertex->seen= False;
     }
+    // Check which neighbors were already seen in previous calls to this method.
     FOREACHneighbor_(atvertex) {
         if (neighbor->visitid < numfacets)
             neighbor->seen= True;
     }
-    FOREACHneighbor_(atvertex) {
+    int check2 = 0;
+    FOREACHneighbor_(atvertex) { // For each Voronoi-vertex of the cell of atvertex
+        //DebugLogger::ss << "Call amount first loop: " << ++check2;
+        //DebugLogger::log();
         if (neighbor->seen) {
-            FOREACHvertex_(neighbor->vertices) {
-                if (vertex->visitid != qhull->qh()->vertex_visit && !vertex->seen) {
-                    vertex->visitid= qhull->qh()->vertex_visit;
-                    count= 0;
+            int check = 0;
+            FOREACHvertex_(neighbor->vertices) { // For each Voronoi cell (= input site) incident on nb
+                int obj_id_1 = sampleObjIdx[qh_pointid(qhull->qh(),atvertex->point)];
+                int obj_id_2 = sampleObjIdx[qh_pointid(qhull->qh(),vertex->point)];
+                if (vertex->visitid != qhull->qh()->vertex_visit // To make sure we don't visit a cell twice when it shares multiple vertices with this cell
+                  && !vertex->seen // Only check ridges that were not visited before (its vertex is already seen)
+                  && ( obj_id_1 != -1 && obj_id_2 != -1 && ( obj_id_1 != obj_id_2 ) )) { 
+                    vertex->visitid= qhull->qh()->vertex_visit; 
+                    count= 0; // Counts amount of vertices on ridge between atvertex and vertex
                     firstinf= True;
                     qh_settruncate(qhull->qh(),tricenters, 0);
-                    FOREACHneighborA_(vertex) {
-                        if (neighborA->seen) {
-                            if (neighborA->visitid) {
+                    FOREACHneighborA_(vertex) { // For each Voronoi-vertex of this cell
+                        if (neighborA->seen) { // It is a Voronoi-vertex of the ridge between vertex and atvertex
+                            if (neighborA->visitid) { // The Voronoi-vertex is not at-infinity
+                                // The Vor-vert is not tricoplanar or (when it is) the center was not already registered
                                 if (!neighborA->tricoplanar || qh_setunique(qhull->qh(),&tricenters, neighborA->center))
                                     count++;
-                            }else if (firstinf) {
+                            }else if (firstinf) { // It is the first Vor-vert at infinity ?
                                 count++;
                                 firstinf= False;
                             }
@@ -322,8 +376,8 @@ int IbsGenerator::findRidgesAroundVertex(vertexT *atvertex)
                     }
 
                     if (count >= qhull->qh()->hull_dim - 1) { // Each ridge has to have at least hull_dim - 1 vertices
-                        if (firstinf) {
-                            if (innerouter == qh_RIDGEouter)
+                        if (firstinf) { // Ridge is not on the border
+                            if (innerouter == qh_RIDGEouter) // If we want only the border, don't use this ridge
                                 continue;
                             unbounded= False;
                         }else {
@@ -334,18 +388,19 @@ int IbsGenerator::findRidgesAroundVertex(vertexT *atvertex)
                         totridges++;
                         //trace4((qh, qh->ferr, 4017, "qh_eachvoronoi: Voronoi ridge of %d vertices between sites %d and %d\n",
                             //count, qh_pointid(qh, atvertex->point), qh_pointid(qh, vertex->point)));
-                        if(!qhull->qh()->ferr)
-                        {
-                            DebugLogger::ss << "Voronoi ridges of ...";
-                            DebugLogger::log();
-                        }
+                        //if(!qhull->qh()->ferr)
+                        //{
+                        //DebugLogger::ss << "Voronoi ridge of " << count << "vertices found between " << qh_pointid(qhull->qh(), atvertex->point) << " and " << qh_pointid(qhull->qh(), vertex->point);
+                        //DebugLogger::log();
+                        //}
                          //QhullError([>qhull->qh()->ferr,<] 4017, "qh_eachvoronoi: Voronoi ridge of %d vertices between sites %d and %f\n",
                              //count, qh_pointid(qhull->qh(),atvertex->point), (float)qh_pointid(qhull->qh(),vertex->point)); // TODO
                         if (printvridge) {
                             if (inorder && qhull->qh()->hull_dim == 3+1) /* 3-d Voronoi diagram */
                                 centers= qh_detvridge3(qhull->qh(),atvertex, vertex); // determine 3-d Voronoi ridge from 'seen' neighbors of atvertex and vertex, listed in adjacency order (not oriented)
-                            else
+                            else {
                                 centers= qh_detvridge(qhull->qh(),vertex);
+                            }
                             // centers : set of facets (i.e., Voronoi vertices)
 
                             // save the new ridge to our own data structure
@@ -375,8 +430,6 @@ int IbsGenerator::findRidgesAroundVertex(vertexT *atvertex)
                                 // only add bounded
                                 if ( !upperdelaunay )
                                 {                    
-                                    int obj_id_1 = sampleObjIdx[sites[0]];
-                                    int obj_id_2 = sampleObjIdx[sites[1]];
 
                                     if ( obj_id_2 < obj_id_1 ) 
                                     {
@@ -404,12 +457,15 @@ int IbsGenerator::findRidgesAroundVertex(vertexT *atvertex)
                                         int ibsIdx = objPair2IbsIdx[obj_id_pair];
                                         ibsRidgeIdxs[ibsIdx].push_back(ridges.size()-1);                                        
                                     }                        
-                                }
-                                
+                                } 
                             }
 
                             qh_settempfree(qhull->qh(),&centers);
                         }
+                    }
+                    else {
+                        //DebugLogger::ss << "Ridge has too few vertices.";
+                        //DebugLogger::log();
                     }
                 }
             }
@@ -445,7 +501,8 @@ void IbsGenerator::buildIBS()
         // 2. build the mesh & get the corresponding sample pairs
         sstr << "ibs_" << ibs->obj1->getName() << "_" << ibs->obj2->getName();
         ibs->ibsObj = std::shared_ptr<Object>(new Object(sstr.str(), buildIbsMesh(i, ibs->samplePairs)));
-
+        DebugLogger::ss << "IBS " << sstr.str();
+        DebugLogger::log();
         // // ibsSet.push_back(ibs);
         // std::vector<std::pair<int, int>> samplePairs;
         // meshSet.push_back(buildIbsMesh(i, samplePairs)); // ibs->samplePairs
@@ -455,6 +512,12 @@ void IbsGenerator::buildIBS()
 
 Mesh IbsGenerator::buildIbsMesh( int i,  std::vector<std::pair<int, int>>& samplePairs )
 {
+    int numFaces = 0;
+    for (std::vector<int> currRidge:ridges)
+        if (currRidge.size() >= 3)
+            numFaces += currRidge.size()-2;
+    DebugLogger::ss << "Amount of faces: " << numFaces;
+    DebugLogger::log();
     //////////////////////////////////////////////////////////////////////////
     // 1. re-index the vertices and update the ridges
     std::vector<int> vIdx;                            // vertices
@@ -494,6 +557,7 @@ Mesh IbsGenerator::buildIbsMesh( int i,  std::vector<std::pair<int, int>>& sampl
     DebugLogger::ss << "Old amount of Ridges: " << ridges.size() << std::endl;
     DebugLogger::ss << "New amount of Ridges: " << ridgesNew.size();
     DebugLogger::log();
+
     
     // TODO
     // //////////////////////////////////////////////////////////////////////////
@@ -581,6 +645,8 @@ Mesh IbsGenerator::buildIbsMesh( int i,  std::vector<std::pair<int, int>>& sampl
         DebugLogger::ss << "ERROR: the number of sample pairs does not equal to that of triangles!!!  " << samplePairs.size() << " vs. " << mesh3d->number_of_faces();
         DebugLogger::log();
     }
+    DebugLogger::ss << "Amount of faces: " << mesh3d->number_of_faces();
+    DebugLogger::log();
 
     return Mesh(mesh3d);
 }

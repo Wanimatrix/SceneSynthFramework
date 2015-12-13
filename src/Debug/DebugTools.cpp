@@ -1,7 +1,7 @@
 #include "DebugTools.h"
 #include <iostream>
 #include <assert.h>
-
+#include <boost/iostreams/device/file_descriptor.hpp>
 // DebugLogger
 // -----------
 std::ostringstream DebugLogger::ss;

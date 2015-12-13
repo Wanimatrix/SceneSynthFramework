@@ -1,4 +1,4 @@
-# Install script for directory: /cygdrive/c/Users/Wouter/Documents/Doctoraat/Implementation/SceneSynthesisFramework2
+# Install script for directory: /Volumes/MacintoshHD/Users/wouterfranken/Documents/KUL/Doctoraat/Implementation/SceneSynthFramework
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)
@@ -35,5 +35,5 @@ endif()
 
 string(REPLACE ";" "\n" CMAKE_INSTALL_MANIFEST_CONTENT
        "${CMAKE_INSTALL_MANIFEST_FILES}")
-file(WRITE "/cygdrive/c/Users/Wouter/Documents/Doctoraat/Implementation/SceneSynthesisFramework2/build/${CMAKE_INSTALL_MANIFEST}"
+file(WRITE "/Volumes/MacintoshHD/Users/wouterfranken/Documents/KUL/Doctoraat/Implementation/SceneSynthFramework/build/${CMAKE_INSTALL_MANIFEST}"
      "${CMAKE_INSTALL_MANIFEST_CONTENT}")

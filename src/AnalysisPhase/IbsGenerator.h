@@ -21,44 +21,48 @@ class IbsGenerator
 {
 
 public:
-	IbsGenerator();
-	~IbsGenerator();
+    IbsGenerator();
+    ~IbsGenerator();
 
 public:
-	std::vector<std::shared_ptr<IBS>> computeIBSForEachTwoObjs(std::vector<std::shared_ptr<Object>> objects);
-	std::vector<std::shared_ptr<IBS>> computeIBSBetweenTwoSets(std::vector<std::shared_ptr<Object>> objs1, std::vector<std::shared_ptr<Object>> objs2);
-	std::vector<std::shared_ptr<IBS>> computeIBS(/*Scene * scene, */std::vector<std::shared_ptr<Object>> objects);
-	void reset();
+    std::vector<std::shared_ptr<IBS>> computeIBSForEachTwoObjs(std::vector<std::shared_ptr<Object>> objects);
+    std::vector<std::shared_ptr<IBS>> computeIBSBetweenTwoSets(std::vector<std::shared_ptr<Object>> objs1, std::vector<std::shared_ptr<Object>> objs2);
+    std::vector<std::shared_ptr<IBS>> computeIBS(/*Scene * scene, */std::vector<std::shared_ptr<Object>> objects);
+    void reset();
 
 private:
-	void computeVoronoi();
-	void findRidges();
-	void buildIBS();
-	
-	std::vector<Point3d> getInputForVoronoi();	
-	int findRidgesAroundVertex(vertexT *atvertex);  // find all unvisited Voronoi ridges for vertex (i.e., an input site)
-	Mesh buildIbsMesh(int i,  std::vector<std::pair<int, int>>& samplePairs);
+    void computeVoronoi();
+    void computeVoronoiCGAL();
+    void findRidges();
+    void buildIBS();
+    
+    std::vector<Point3d> getInputForVoronoi();    
+    int findRidgesAroundVertex(vertexT *atvertex);  // find all unvisited Voronoi ridges for vertex (i.e., an input site)
+    Mesh buildIbsMesh(int i,  std::vector<std::pair<int, int>>& samplePairs);
 
 private:
-	// Scene *scene;
-	std::vector<std::shared_ptr<IBS>> ibsSet;
-	// std::vector<Mesh> meshSet;
-	//std::vector<int> activeObjIdx;		// useless, can be commented
-	std::vector<std::shared_ptr<Object>> objects;
+    // Scene *scene;
+    std::vector<std::shared_ptr<IBS>> ibsSet;
+    // std::vector<Mesh> meshSet;
+    //std::vector<int> activeObjIdx;        // useless, can be commented
+    std::vector<std::shared_ptr<Object>> objects;
 
 private:
-	orgQhull::Qhull *qhull;	
-	std::vector<Point3d> voronoiVertices;
+    orgQhull::Qhull *qhull;    
+    std::vector<Point3d> voronoiVertices;
 
-	// same size with ibsSet
-	std::map<std::pair<int, int>, int> objPair2IbsIdx;
-	std::vector< std::vector<int> > ibsRidgeIdxs;	// using objPair2IbsIdx to index this std::vector
+    Triangulation *T;
+    K_to_Kd toKd;
+    Kd_to_K toK;
+    // same size with ibsSet
+    std::map<std::pair<int, int>, int> objPair2IbsIdx;
+    std::vector< std::vector<int> > ibsRidgeIdxs;    // using objPair2IbsIdx to index this std::vector
 
-	std::vector< std::vector<int> > ridges;
-	std::vector< int* > ridgeSitePair;
+    std::vector< std::vector<int> > ridges;
+    std::vector< int* > ridgeSitePair;
 
-	std::vector<int> sampleObjIdx;				//the corresponding objectIdx for each sample points
-	std::vector<int> sampleLocalIdx;
+    std::vector<int> sampleObjIdx;                //the corresponding objectIdx for each sample points
+    std::vector<int> sampleLocalIdx;
 
-	DebugTimer timer;
+    DebugTimer timer;
 };

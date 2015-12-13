@@ -130,7 +130,7 @@
 
 #elif defined(_CRAYC)
 # define COMPILER_ID "Cray"
-# define COMPILER_VERSION_MAJOR DEC(_RELEASE)
+# define COMPILER_VERSION_MAJOR DEC(_RELEASE_MAJOR)
 # define COMPILER_VERSION_MINOR DEC(_RELEASE_MINOR)
 
 #elif defined(__TI_COMPILER_VERSION__)
@@ -181,7 +181,9 @@
 #elif defined(__GNUC__)
 # define COMPILER_ID "GNU"
 # define COMPILER_VERSION_MAJOR DEC(__GNUC__)
-# define COMPILER_VERSION_MINOR DEC(__GNUC_MINOR__)
+# if defined(__GNUC_MINOR__)
+#  define COMPILER_VERSION_MINOR DEC(__GNUC_MINOR__)
+# endif
 # if defined(__GNUC_PATCHLEVEL__)
 #  define COMPILER_VERSION_PATCH DEC(__GNUC_PATCHLEVEL__)
 # endif
@@ -482,6 +484,17 @@ char const* info_arch = "INFO" ":" "arch[" ARCHITECTURE_ID "]";
 
 
 
+const char* info_language_dialect_default = "INFO" ":" "dialect_default["
+#if !defined(__STDC_VERSION__)
+  "90"
+#elif __STDC_VERSION__ >= 201000L
+  "11"
+#elif __STDC_VERSION__ >= 199901L
+  "99"
+#else
+#endif
+"]";
+
 /*--------------------------------------------------------------------------*/
 
 #ifdef ID_VOID_MAIN
@@ -502,6 +515,7 @@ int main(int argc, char* argv[])
 #ifdef SIMULATE_VERSION_MAJOR
   require += info_simulate_version[argc];
 #endif
+  require += info_language_dialect_default[argc];
   (void)argv;
   return require;
 }
