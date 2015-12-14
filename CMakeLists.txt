@@ -76,7 +76,7 @@ set ( LIB_DIR ${CMAKE_SOURCE_DIR}/../libs)
     ## GnuPlot-IOSTREAM
     set ( GPIOS_DIR ${LIB_DIR}/gnuplot-iostream)
     include_directories ( ${GPIOS_DIR} )
-    list ( APPEND LIBRARY_LINKS_LST mpfr gmp boost_thread-mt boost_iostreams boost_system boost_filesystem util )
+    list ( APPEND LIBRARY_LINKS_LST mpfr gmp boost_thread boost_iostreams boost_system boost_filesystem util )
     
 file(GLOB_RECURSE SOURCES "${CMAKE_SOURCE_DIR}/src/*.cpp")
 

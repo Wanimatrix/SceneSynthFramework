@@ -16,10 +16,6 @@ using namespace std;
 
 int main() {
 
-    #ifdef config
-    #define to_str(x) #x
-    std::cout << to_str(config)
-    #endif
 
     /*Plotter p(true);
     p.plotHist(std::vector<double>({1,6,3,7,4}),true);*/

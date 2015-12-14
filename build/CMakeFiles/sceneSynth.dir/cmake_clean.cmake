@@ -11,7 +11,6 @@ file(REMOVE_RECURSE
   "CMakeFiles/sceneSynth.dir/src/Display/writeOBJ.cpp.o"
   "CMakeFiles/sceneSynth.dir/src/Experiments/Experiments.cpp.o"
   "CMakeFiles/sceneSynth.dir/src/Face.cpp.o"
-  "CMakeFiles/sceneSynth.dir/src/file_descriptor.cpp.o"
   "CMakeFiles/sceneSynth.dir/src/Input.cpp.o"
   "CMakeFiles/sceneSynth.dir/src/main.cpp.o"
   "CMakeFiles/sceneSynth.dir/src/Mesh.cpp.o"
@@ -20,7 +19,8 @@ file(REMOVE_RECURSE
   "CMakeFiles/sceneSynth.dir/src/SceneLoader.cpp.o"
   "CMakeFiles/sceneSynth.dir/src/Vertex.cpp.o"
   "../bin/sceneSynth.pdb"
-  "../bin/sceneSynth"
+  "../bin/sceneSynth.exe"
+  "libsceneSynth.dll.a"
 )
 
 # Per-language clean rules from dependency scanning.

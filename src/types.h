@@ -4,8 +4,23 @@
 #include <CGAL/Surface_mesh.h>
 #include <CGAL/Exact_predicates_exact_constructions_kernel.h>
 #include <CGAL/Delaunay_triangulation_3.h>
+#include <CGAL/Triangulation_cell_base_with_info_3.h>
+#include <CGAL/Triangulation_vertex_base_with_info_3.h>
+
+typedef struct CellInfo {
+    bool seen = false;
+    int id = -1;
+} CellInfo;
+
+typedef struct VertexInfo {
+    bool seen = false;
+    unsigned int visitid = 0;
+} VertexInfo;
 typedef CGAL::Exact_predicates_exact_constructions_kernel K;
-typedef CGAL::Delaunay_triangulation_3<K> Triangulation;
+typedef CGAL::Triangulation_cell_base_with_info_3<CellInfo, K> Cb;
+typedef CGAL::Triangulation_vertex_base_with_info_3<VertexInfo, K> Vb;
+typedef CGAL::Triangulation_data_structure_3<Vb,Cb> Tds;
+typedef CGAL::Delaunay_triangulation_3<K,Tds> Triangulation;
 typedef CGAL::Simple_cartesian<double> Kd;
 typedef CGAL::Cartesian_converter<K,Kd>  K_to_Kd;
 typedef CGAL::Cartesian_converter<Kd,K> Kd_to_K;
