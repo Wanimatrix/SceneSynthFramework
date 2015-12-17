@@ -33,6 +33,8 @@ IbsGenerator::~IbsGenerator()
     for(int i = 0; i < ridgeSitePair.size(); i++) {
         if(ridgeSitePair[i]) delete[] ridgeSitePair[i];
     }
+    if(T)
+        delete T;
 }
 
 void IbsGenerator::reset() {
@@ -51,6 +53,10 @@ void IbsGenerator::reset() {
 
     sampleObjIdx.clear();
     sampleLocalIdx.clear();
+    if(T)
+        delete T;
+    T = nullptr;
+    vertToIdx.clear();
 
     // meshSet.clear();
     ibsSet.clear();
@@ -84,7 +90,7 @@ std::vector<std::shared_ptr<IBS>> IbsGenerator::computeIBSBetweenTwoSets(std::ve
     {
         for (int j = 0; j < objs2.size(); ++j)
         {
-            if (qhull) reset();
+            reset();
             timer.start();
             std::vector<std::shared_ptr<IBS>> ibses = computeIBS(std::vector<std::shared_ptr<Object>>({objs1[i],objs2[j]}));
             timer.printElapsedTime("IBS");
@@ -102,14 +108,14 @@ std::vector<std::shared_ptr<IBS>> IbsGenerator::computeIBS(std::vector<std::shar
     // scene = s;
     objects = objs;
 
-    computeVoronoiCGAL();
-    //computeVoronoi();
-    findRidgesCGAL();
-    //findRidges();
-    DebugLogger::ss << "CGAL counter : " << counterCGAL;
-    DebugLogger::log();
-    DebugLogger::ss << "Qhull counter : " << counterQHULL;
-    DebugLogger::log();
+    //computeVoronoiCGAL();
+    computeVoronoi();
+    //findRidgesCGAL();
+    findRidges();
+    //DebugLogger::ss << "CGAL counter : " << counterCGAL;
+    //DebugLogger::log();
+    //DebugLogger::ss << "Qhull counter : " << counterQHULL;
+    //DebugLogger::log();
     //exit(1);
     buildIBS();
 
@@ -125,26 +131,46 @@ int global_ibsCounter = 0;
 void IbsGenerator::computeVoronoiCGAL()
 {
     std::vector<Point3d> points = getInputForVoronoi();
+    std::map<Triangulation::Point,int> pointmap;
     std::vector<Triangulation::Point> pointCoords;
 
     T = new Triangulation();
-    Triangulation *T2 = nullptr;
+    //Triangulation *T2 = nullptr;
 
-    DebugLogger::ss << "Amount of points: " << T->number_of_vertices();
-    DebugLogger::log();
+    //DebugLogger::ss << "Amount of points: " << T->number_of_vertices();
+    //DebugLogger::log();
+    //#ifdef CGAL_LINKED_WITH_TBB
+    //DebugLogger::ss << "Linked with Tbb";
+    //DebugLogger::log();
+//#else
+    //DebugLogger::ss << "Not linked with Tbb";
+    //DebugLogger::log();
+//#endif
 
     for(int i = 0; i < points.size(); i++) {
         Triangulation::Point p = toK(points[i]);
         Triangulation::Vertex_handle v = T->insert(p);
         vertToIdx[v] = i;
-        pointCoords.push_back(p);
+        //pointCoords.push_back(p);
+        //pointmap[p] = i;
     }
+    //CGAL::Bbox_3 bbox = CGAL::bbox_3(pointCoords.begin(),pointCoords.end());
+    //Triangulation::Lock_data_structure lock_ds(bbox, 2);
+    //T = new Triangulation(pointCoords.begin(),pointCoords.end()[>,&lock_ds<]);
     assert(T->is_valid());
-    T2 = new Triangulation(pointCoords.begin(),pointCoords.end());
-    DebugLogger::ss << "Amount of cells 1: " << T->number_of_finite_cells();
-    DebugLogger::log();
-    DebugLogger::ss << "Amount of cells 2: " << T2->number_of_finite_cells();
-    DebugLogger::log();
+    //Triangulation::Finite_vertices_iterator vit;
+    //for (vit = T->finite_vertices_begin(); vit != T->finite_vertices_end(); ++vit) {
+        //vertToIdx[vit] = pointmap[vit->point()];
+    //}
+    //DebugLogger::ss << "Points size: " << pointCoords.size();
+    //DebugLogger::ss << ", vertToIdx size: " << vertToIdx.size();
+    //DebugLogger::log();
+    //assert(vertToIdx.size() == pointCoords.size());
+    //T = new Triangulation(pointCoords.begin(),pointCoords.end());
+    //DebugLogger::ss << "Amount of cells 1: " << T->number_of_finite_cells();
+    //DebugLogger::log();
+    //DebugLogger::ss << "Amount of cells 2: " << T2->number_of_finite_cells();
+    //DebugLogger::log();
     // use Qhull to create Voronoi diagram
     //if(!qhull) qhull = new orgQhull::Qhull("", 3, (int)points.size(), pointCoords.data(), "v");
     //else throw std::invalid_argument( "qhull was already initialized!" );
@@ -159,12 +185,12 @@ void IbsGenerator::computeVoronoiCGAL()
         //DebugLogger::ss << "Voronoi vertex: " << voronoiVertices[voronoiVertices.size()-1];
         //DebugLogger::log();
     }
-    DebugLogger::ss << "Amount of points: " << vertToIdx.size();
-    DebugLogger::log();
-    DebugLogger::ss << "Amount of cells: " << T->number_of_finite_cells();
-    DebugLogger::log();
-    DebugLogger::ss << "Voronoi vertices CGAL: " << voronoiVerticesCGAL.size();
-    DebugLogger::log();
+    //DebugLogger::ss << "Amount of points: " << vertToIdx.size();
+    //DebugLogger::log();
+    //DebugLogger::ss << "Amount of cells: " << T->number_of_finite_cells();
+    //DebugLogger::log();
+    //DebugLogger::ss << "Voronoi vertices CGAL: " << voronoiVertices.size();
+    //DebugLogger::log();
 
     //for ( orgQhull::QhullFacet facet = qhull->firstFacet(); facet != qhull->endFacet(); facet=facet.next() )
     //{
@@ -198,7 +224,7 @@ void IbsGenerator::computeVoronoi()
     //out.close();
 
     // use Qhull to create Voronoi diagram
-    if(!qhull) qhull = new orgQhull::Qhull("", 3, (int)points.size(), pointCoords.data(), "v");
+    if(!qhull) qhull = new orgQhull::Qhull("", 3, (int)points.size(), pointCoords.data(), "v Qt");
     else throw std::invalid_argument( "qhull was already initialized!" );
     //qhull->runQhull("", 3, (int)points.size(), pointCoords.data(), "v");
  
@@ -208,12 +234,12 @@ void IbsGenerator::computeVoronoi()
         orgQhull::QhullPoint p = facet.voronoiVertex();
         voronoiVertices.push_back(Point3d(p[0], p[1], p[2]));
     }
-    DebugLogger::ss << "Amount of points QHull: " << qhull->qh()->num_vertices;
-    DebugLogger::log();
-    DebugLogger::ss << "Amount of facets: " << qhull->qh()->num_facets;
-    DebugLogger::log();
-    DebugLogger::ss << "Voronoi vertices Qhull: " << voronoiVertices.size();
-    DebugLogger::log();
+    //DebugLogger::ss << "Amount of points QHull: " << qhull->qh()->num_vertices;
+    //DebugLogger::log();
+    //DebugLogger::ss << "Amount of facets: " << qhull->qh()->num_facets;
+    //DebugLogger::log();
+    //DebugLogger::ss << "Voronoi vertices Qhull: " << voronoiVertices.size();
+    //DebugLogger::log();
     //foreach(orgQhull::QhullFacet facet, qhull->facetList()) {
     //    orgQhull::QhullPoint p = facet.voronoiVertex(qhull->runId());
     //    voronoiVertices.push_back(Point3d(p[0], p[1], p[2]));
@@ -322,44 +348,44 @@ std::vector<Point3d> IbsGenerator::getInputForVoronoi()
 /*
  * visit all pairs of input sites (vertices) for selected Voronoi vertices
 */
-int cellId = 0;
 unsigned int vertex_visit = 0;
 void IbsGenerator::findRidgesCGAL()
 {
-    cellId = 0;
     vertex_visit = 0;
     Triangulation::Finite_vertices_iterator vit;
+    Triangulation::Finite_vertices_iterator vit_end;
     int totridges = 0;
-    for (vit = T->finite_vertices_begin(); vit != T->finite_vertices_end(); ++vit)
-        totridges = findRidgesAroundVertexCGAL(vit);
-    DebugLogger::ss << "CGAL found " << totridges << "ridges.";
+    for (vit = T->finite_vertices_begin(), vit_end = T->finite_vertices_end(); vit != vit_end; ++vit)
+        totridges += findRidgesAroundVertexCGAL(vit);
+    DebugLogger::ss << "CGAL found " << totridges << " ridges.";
     DebugLogger::log();
 }
 /// libqhull\io.c -> qh_eachvoronoi
 int IbsGenerator::findRidgesAroundVertexCGAL(Triangulation::Vertex_handle atvertex)
 {
     unsigned int numCells = (unsigned int) T->number_of_cells();
-    int totridges;
+    int totridges = 0;
     int count;
     bool firstinf, unbounded;
     std::vector <Triangulation::Cell_handle> centers;
     std::vector <Triangulation::Cell_handle> cells;
     std::vector <Triangulation::Cell_handle> cellsA;
-    std::vector<Triangulation::Cell_handle>::iterator citA;
-    std::vector<Triangulation::Cell_handle>::iterator cit;
+    //std::vector<Triangulation::Cell_handle>::iterator citA;
+    //std::vector<Triangulation::Cell_handle>::iterator cit;
 
     vertex_visit++;
     atvertex->info().seen = true;
 
     T->incident_cells(atvertex,std::back_inserter(cells)); 
-    for (cit = cells.begin(); cit != cells.end(); cit++) {
-        (*cit)->info().seen = true;
+    for (Triangulation::Cell_handle currentCell:cells) {//(cit = cells.begin(); cit != cells.end(); cit++) {
+        currentCell->info().seen = true;
     }
-    for (cit = cells.begin(); cit != cells.end(); cit++) {
-        Triangulation::Cell_handle currentCell = *cit;
+    for (Triangulation::Cell_handle currentCell:cells) {//(cit = cells.begin(); cit != cells.end(); cit++) {
+        //Triangulation::Cell_handle currentCell = *cit;
         if(currentCell->info().seen){
             for(int i = 0; i < 4; i++) {
-                counterCGAL++;
+                //DebugLogger::ss << "Vertices of cell " << currentCell->info().id;
+                //DebugLogger::log();
                 Triangulation::Vertex_handle vertex = currentCell->vertex(i);
 
                 int obj_id_1 = sampleObjIdx[vertToIdx[atvertex]];
@@ -369,13 +395,14 @@ int IbsGenerator::findRidgesAroundVertexCGAL(Triangulation::Vertex_handle atvert
                 if (vertex->info().visitid != vertex_visit // To make sure vertex is not already visited in this call
                   && !vertex->info().seen // Only check ridges that were not visited before (its vertex is already seen)
                   && ( obj_id_1 != -1 && obj_id_2 != -1 && ( obj_id_1 != obj_id_2 ) )) { 
+                    counterCGAL++;
                     vertex->info().visitid = vertex_visit;
                     count = 0;
                     firstinf = true;
                     
                     T->incident_cells(vertex,std::back_inserter(cellsA)); 
-                    for (citA = cellsA.begin(); citA != cellsA.end(); citA++) {
-                        Triangulation::Cell_handle cellA = *cit;
+                    for (Triangulation::Cell_handle cellA:cellsA) {//(citA = cellsA.begin(); citA != cellsA.end(); ++citA) {
+                        //Triangulation::Cell_handle cellA = *cit;
                         if(cellA->info().seen) {
                             if (!T->is_infinite(cellA))
                                 count++;
@@ -386,6 +413,8 @@ int IbsGenerator::findRidgesAroundVertexCGAL(Triangulation::Vertex_handle atvert
                         }
                     }
                     cellsA.clear();
+                    //DebugLogger::ss << "cellsA size: " << cellsA.size();
+                    //DebugLogger::log();
 
                     if (count >= 3) {
                         if (firstinf) {
@@ -395,22 +424,69 @@ int IbsGenerator::findRidgesAroundVertexCGAL(Triangulation::Vertex_handle atvert
                             //break;
                         }
                         totridges++;
-                        
+                       
+                        // qh detvridge3
                         firstinf = true;
+                        centers.clear();
+                        for (Triangulation::Cell_handle c:cells)
+                            c->info().seen2 = false;
+                        Triangulation::Cell_handle cellA;
                         T->incident_cells(vertex,std::back_inserter(cellsA)); 
-                        for (citA = cellsA.begin(); citA != cellsA.end(); citA++) {
-                            Triangulation::Cell_handle cellA = *cit;
-                            if(cellA->info().seen) {
+                        for (Triangulation::Cell_handle c:cellsA) {//(cit = cells.begin(); cit != cells.end(); cit++) {
+                           if (!c->info().seen2) {
+                               cellA = c;
+                               break;
+                           }
+                        }
+                        Triangulation::Cell_handle previousCell;
+                        Triangulation::Cell_handle nextCell;
+                        while (cellA != Triangulation::Cell_handle()) {//(citA = cellsA.begin(); citA != cellsA.end(); ++citA) {
+                            cellA->info().seen2 = true;
+                            //Triangulation::Cell_handle cellA = *cit;
+                            if(cellA->info().seen) { // Is this also a neighbor of atvertex?
                                 if (!T->is_infinite(cellA)) {
+                                    //if(centers.size() > 0 && !cellA->has_neighbor(previousCell)) {
+                                        //DebugLogger::ss << "Cells are no neighbors!";
+                                        //DebugLogger::log();
+                                    //}
                                     centers.push_back(cellA);
-                                }
-                                else if (firstinf) {
+                                    //if(citA != cellsA.begin() && previousCell == cellA)
+                                        //DebugLogger::ss << "Same cell as previous." << std::endl;
+                                } else if (firstinf) {
                                     centers.push_back(cellA);
                                     firstinf = false;
+                                    DebugLogger::ss << "A cell was infinite!";
+                                    DebugLogger::log();
+                                    exit(1);
                                     break;
                                 }
                             }
+                            // Make sure the next cell is neighbor of this cell and nb of vertex and atvertex
+                            nextCell = Triangulation::Cell_handle();
+                            for (int j = 0; j < 4; j++){
+                                Triangulation::Cell_handle cellANb = cellA->neighbor(j);
+                                if(!cellANb->info().seen2) {
+                                    if(cellANb->has_vertex(vertex)) {
+                                        nextCell = cellANb;
+                                        break;
+                                    } else {
+                                        cellANb->info().seen2 = true;
+                                    }
+                                }
+                            }
+                            cellA = nextCell;
+
+                            //if(centers.size() > 0)
+                                //previousCell = centers[centers.size()-1];
                         }
+                        for (Triangulation::Cell_handle c:cells)
+                            c->info().seen2 = true;
+                        cellsA.clear();
+                        //DebugLogger::log();
+                        //if(centers.empty()) {
+                            //DebugLogger::ss << "Ridge has NO vertices!";
+                            //DebugLogger::log();
+                        //}
 
                         int *sites = nullptr;
                         {
@@ -419,9 +495,12 @@ int IbsGenerator::findRidgesAroundVertexCGAL(Triangulation::Vertex_handle atvert
                             sites[1] = vertToIdx[vertex];
 
                             std::vector<int> ridge;
+                            //DebugLogger::ss << "Ridge: ";
                             for(Triangulation::Cell_handle c:centers){
                                 ridge.push_back(c->info().id);
+                                //DebugLogger::ss << c->info().id << " ";
                             }
+                            //DebugLogger::log();
                             if(obj_id_2 < obj_id_1) {
                                 std::swap(obj_id_1,obj_id_2);
                                 std::swap(sites[0], sites[1]);
@@ -450,8 +529,8 @@ int IbsGenerator::findRidgesAroundVertexCGAL(Triangulation::Vertex_handle atvert
             }
         }
     }
-    for (cit = cells.begin(); cit != cells.end(); cit++) {
-        (*cit)->info().seen = false;
+    for (Triangulation::Cell_handle currentCell:cells) {//(cit = cells.begin(); cit != cells.end(); cit++) {
+        (currentCell)->info().seen = false;
     }
     return totridges;
 } 
@@ -533,12 +612,12 @@ int IbsGenerator::findRidgesAroundVertex(vertexT *atvertex)
         if (neighbor->seen) {
             int check = 0;
             FOREACHvertex_(neighbor->vertices) { // For each Voronoi cell (= input site) incident on nb
-                counterQHULL++;
                 int obj_id_1 = sampleObjIdx[qh_pointid(qhull->qh(),atvertex->point)];
                 int obj_id_2 = sampleObjIdx[qh_pointid(qhull->qh(),vertex->point)];
                 if (vertex->visitid != qhull->qh()->vertex_visit // To make sure we don't visit a cell twice when it shares multiple vertices with this cell
                   && !vertex->seen // Only check ridges that were not visited before (its vertex is already seen)
                   && ( obj_id_1 != -1 && obj_id_2 != -1 && ( obj_id_1 != obj_id_2 ) )) { 
+                    //counterQHULL++;
                     vertex->visitid= qhull->qh()->vertex_visit; 
                     count= 0; // Counts amount of vertices on ridge between atvertex and vertex
                     firstinf= True;
@@ -578,10 +657,12 @@ int IbsGenerator::findRidgesAroundVertex(vertexT *atvertex)
                              //count, qh_pointid(qhull->qh(),atvertex->point), (float)qh_pointid(qhull->qh(),vertex->point)); // TODO
                         if (printvridge) {
                             if (inorder && qhull->qh()->hull_dim == 3+1) /* 3-d Voronoi diagram */
-                                centers= qh_detvridge3(qhull->qh(),atvertex, vertex); // determine 3-d Voronoi ridge from 'seen' neighbors of atvertex and vertex, listed in adjacency order (not oriented)
+                                centers= qh_detvridge3(qhull->qh(), atvertex, vertex); // determine 3-d Voronoi ridge from 'seen' neighbors of atvertex and vertex, listed in adjacency order (not oriented)
                             else {
                                 centers= qh_detvridge(qhull->qh(),vertex);
+                                DebugLogger::log();
                             }
+
                             // centers : set of facets (i.e., Voronoi vertices)
 
                             // save the new ridge to our own data structure
@@ -642,6 +723,9 @@ int IbsGenerator::findRidgesAroundVertex(vertexT *atvertex)
                             }
 
                             qh_settempfree(qhull->qh(),&centers);
+                        }else {
+                            DebugLogger::ss << "Printvridge is false ...";
+                            DebugLogger::log();
                         }
                     }
                     else {
@@ -693,12 +777,17 @@ void IbsGenerator::buildIBS()
 
 Mesh IbsGenerator::buildIbsMesh( int i,  std::vector<std::pair<int, int>>& samplePairs )
 {
-    int numFaces = 0;
-    for (std::vector<int> currRidge:ridges)
-        if (currRidge.size() >= 3)
-            numFaces += currRidge.size()-2;
-    DebugLogger::ss << "Amount of faces: " << numFaces;
-    DebugLogger::log();
+    //int numFaces = 0;
+    //int numVertices = 0;
+    //for (std::vector<int> currRidge:ridges) {
+        //numVertices += currRidge.size();
+        //if (currRidge.size() >= 3)
+            //numFaces += currRidge.size()-2;
+    //}
+    //DebugLogger::ss << "Amount of faces: " << numFaces;
+    //DebugLogger::log();
+    //DebugLogger::ss << "Amount of vertices: " << numVertices;
+    //DebugLogger::log();
     //////////////////////////////////////////////////////////////////////////
     // 1. re-index the vertices and update the ridges
     std::vector<int> vIdx;                            // vertices
@@ -714,6 +803,8 @@ Mesh IbsGenerator::buildIbsMesh( int i,  std::vector<std::pair<int, int>>& sampl
 
         if(ridge.size() < 3)                        // a face must contain more than 2 edges(ridges)
         {
+            DebugLogger::ss << "Ridge too few vertices...";
+            DebugLogger::log();
             continue;
         }
 
@@ -795,20 +886,24 @@ Mesh IbsGenerator::buildIbsMesh( int i,  std::vector<std::pair<int, int>>& sampl
         // add the triangle fan for each polygon
         for (int k=1; k<ridgesNew[j].size()-1; k++)
         {
+            //DebugLogger::ss << "Adding a face.";
+            //DebugLogger::log();
             if (flip)
             {
                 //f = mesh3d->add_face(cgal_vertIdxes[ridgesNew[j][k+1]],cgal_vertIdxes[ridgesNew[ibsRidgeIdxs[i][j]][k]],cgal_vertIdxes[ridgesNew[ibsRidgeIdxs[i][j]][0]]);
-                 f = mesh3d->add_face(cgal_vertIdxes[ridgesNew[j][k+1]], cgal_vertIdxes[ridgesNew[j][k]], cgal_vertIdxes[ridgesNew[j][0]]);
-                 faceNormals[f] = CGAL::normal(points[cgal_vertIdxes[ridgesNew[j][k+1]]], points[cgal_vertIdxes[ridgesNew[j][k]]], points[cgal_vertIdxes[ridgesNew[j][0]]]);
+                f = mesh3d->add_face(cgal_vertIdxes[ridgesNew[j][k+1]], cgal_vertIdxes[ridgesNew[j][k]], cgal_vertIdxes[ridgesNew[j][0]]);
+                if (f != Mesh3d::null_face())//(f.is_valid())
+                    faceNormals[f] = CGAL::normal(points[cgal_vertIdxes[ridgesNew[j][k+1]]], points[cgal_vertIdxes[ridgesNew[j][k]]], points[cgal_vertIdxes[ridgesNew[j][0]]]);
             }
             else
             {
                 //f = mesh3d->add_face(cgal_vertIdxes[ridgesNew[ibsRidgeIdxs[i][j]][0]],cgal_vertIdxes[ridgesNew[ibsRidgeIdxs[i][j]][k]],cgal_vertIdxes[ridgesNew[ibsRidgeIdxs[i][j]][k+1]]);
                 f = mesh3d->add_face(cgal_vertIdxes[ridgesNew[j][0]], cgal_vertIdxes[ridgesNew[j][k]], cgal_vertIdxes[ridgesNew[j][k+1]]);
-                faceNormals[f] = CGAL::normal(points[cgal_vertIdxes[ridgesNew[j][0]]], points[cgal_vertIdxes[ridgesNew[j][k]]], points[cgal_vertIdxes[ridgesNew[j][k+1]]]);
+                if (f != Mesh3d::null_face())//(f.is_valid())
+                    faceNormals[f] = CGAL::normal(points[cgal_vertIdxes[ridgesNew[j][0]]], points[cgal_vertIdxes[ridgesNew[j][k]]], points[cgal_vertIdxes[ridgesNew[j][k+1]]]);
             }    
 
-            if (f != -1)//(f.is_valid())
+            if (f != Mesh3d::null_face())//(f.is_valid())
             {    
                 samplePairs.push_back(std::pair<int, int>(sampleLocalIdx[pair[0]], sampleLocalIdx[pair[1]]));
             }

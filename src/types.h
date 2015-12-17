@@ -9,6 +9,7 @@
 
 typedef struct CellInfo {
     bool seen = false;
+    bool seen2 = true;
     int id = -1;
 } CellInfo;
 
@@ -19,7 +20,7 @@ typedef struct VertexInfo {
 typedef CGAL::Exact_predicates_exact_constructions_kernel K;
 typedef CGAL::Triangulation_cell_base_with_info_3<CellInfo, K> Cb;
 typedef CGAL::Triangulation_vertex_base_with_info_3<VertexInfo, K> Vb;
-typedef CGAL::Triangulation_data_structure_3<Vb,Cb> Tds;
+typedef CGAL::Triangulation_data_structure_3<Vb,Cb, CGAL::Parallel_tag> Tds;
 typedef CGAL::Delaunay_triangulation_3<K,Tds> Triangulation;
 typedef CGAL::Simple_cartesian<double> Kd;
 typedef CGAL::Cartesian_converter<K,Kd>  K_to_Kd;

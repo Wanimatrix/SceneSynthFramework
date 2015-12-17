@@ -40,6 +40,7 @@ private:
     std::vector<Point3d> getInputForVoronoi();    
     int findRidgesAroundVertex(vertexT *atvertex);  // find all unvisited Voronoi ridges for vertex (i.e., an input site)
     int findRidgesAroundVertexCGAL(Triangulation::Vertex_handle atvertex);  // find all unvisited Voronoi ridges for vertex (i.e., an input site)
+    setT *detvridge3 (vertexT *atvertex, vertexT *vertex);
     
     Mesh buildIbsMesh(int i,  std::vector<std::pair<int, int>>& samplePairs);
 
@@ -51,11 +52,11 @@ private:
     std::vector<std::shared_ptr<Object>> objects;
 
 private:
-    orgQhull::Qhull *qhull;    
+    orgQhull::Qhull *qhull = nullptr;    
     std::vector<Point3d> voronoiVertices;
     std::vector<Point3d> voronoiVerticesCGAL;
 
-    Triangulation *T;
+    Triangulation *T = nullptr;
     std::map<Triangulation::Vertex_handle,int> vertToIdx;
     K_to_Kd toKd;
     Kd_to_K toK;

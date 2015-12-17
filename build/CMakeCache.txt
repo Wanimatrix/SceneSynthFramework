@@ -175,10 +175,25 @@ CMAKE_USE_RELATIVE_PATHS:BOOL=OFF
 CMAKE_VERBOSE_MAKEFILE:BOOL=FALSE
 
 //No help, variable specified on the command line.
+DEBUG:UNINITIALIZED=ON
+
+//No help, variable specified on the command line.
 EXPS:UNINITIALIZED=ON
 
 //No help, variable specified on the command line.
 PERF:UNINITIALIZED=ON
+
+//No help, variable specified on the command line.
+PROFILING:UNINITIALIZED=ON
+
+//No help, variable specified on the command line.
+SYMBOLS:UNINITIALIZED=OFF
+
+//No help, variable specified on the command line.
+TBBROOT:UNINITIALIZED=../../libs/tbb42_20140601oss_src/tbb42_20140601oss/
+
+//The directory containing a CMake configuration file for TBB.
+TBB_DIR:PATH=TBB_DIR-NOTFOUND
 
 //Value Computed by CMake
 sceneSynth_BINARY_DIR:STATIC=/cygdrive/c/Users/Wouter/Documents/Doctoraat/Implementation/SceneSynthesisFramework2/build

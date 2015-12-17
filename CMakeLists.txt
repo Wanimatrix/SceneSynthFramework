@@ -11,19 +11,27 @@ include_directories(/usr/local/include)
 link_directories ( /usr/local/lib )
 
 # set compiler and linker flags
-set (COMPILER_FLAGS "-std=c++11 -U__STRICT_ANSI__ -fopenmp -O3")
+set (COMPILER_FLAGS "-std=c++11 -m64 -U__STRICT_ANSI__ -fopenmp -O2")
 set (LINK_FLAGS "-fopenmp")
-set ( CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} ${COMPILER_FLAGS}" )
-set ( CMAKE_EXE_LINKER_FLAGS  "${CMAKE_EXE_LINKER_FLAGS} ${LINK_FLAGS}" )
 
-# set preprocessor definitions
-add_definitions ("-DDEBUG")
+if (PROFILING)
+    set (COMPILER_FLAGS "${COMPILER_FLAGS} -pg")
+    set (LINK_FLAGS "${LINK_FLAGS} -pg")
+endif()
+if (SYMBOLS)
+    set (COMPILER_FLAGS "${COMPILER_FLAGS} -g")
+    add_definitions ("-DSYMBOLS")
+endif()
 if (EXPS)
     add_definitions("-DEXP")
 endif()
 if (PERF)
     add_definitions("-DPERFTIMER")
-endif()
+endif ()
+if (DEBUG)
+    add_definitions ("-DDEBUG")
+endif ()
+
 
 #[[set ( LIBRARY_LINKS_LST "")
 set ( DLLS_TO_COPY "")]]
@@ -78,7 +86,23 @@ set ( LIB_DIR ${CMAKE_SOURCE_DIR}/../libs)
     include_directories ( ${GPIOS_DIR} )
     list ( APPEND LIBRARY_LINKS_LST mpfr gmp boost_thread boost_iostreams boost_system boost_filesystem util )
     
+    ## TBB (For CGAL)
+    #set ( TBB_DIR ${LIB_DIR}/tbb42_20140601oss_src/tbb42_20140601oss)
+    #include_directories (${TBB_DIR}/include)
+    #link_directories ( ${TBB_DIR}/build/cygwin_intel64_gcc_cc4.9.3_newlib_release )
+    #add_definitions( -DNOMINMAX -DCGAL_LINKED_WITH_TBB )
+    #if (CYGWIN)
+        #list ( APPEND LIBRARY_LINKS_LST tbb.dll tbbmalloc.dll pthread)
+        #file (GLOB DLL ${TBB_DIR}/build/cygwin_intel64_gcc_cc4.9.3_newlib_release/*tbb*.dll)
+        #list ( APPEND DLLS_TO_COPY ${DLL})
+    #endif ()
+    #link_directories (${TBB_DIR}/lib)
+    #list ( APPEND LIBRARY_LINKS_LST qhullcpp qhull_r.dll )
+    
 file(GLOB_RECURSE SOURCES "${CMAKE_SOURCE_DIR}/src/*.cpp")
+
+set ( CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} ${COMPILER_FLAGS}" )
+set ( CMAKE_EXE_LINKER_FLAGS  "${CMAKE_EXE_LINKER_FLAGS} ${LINK_FLAGS}" )
 
 add_executable(sceneSynth ${SOURCES})
 target_link_libraries(sceneSynth ${LIBRARY_LINKS_LST})
