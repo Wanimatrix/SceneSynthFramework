@@ -5,8 +5,10 @@
 #include <CGAL/bounding_box.h>
 #include "AnalysisPhase/Sampler.h"
 #include <memory>
+#include <boost/algorithm/string.hpp>
+#include "Debug/DebugTools.h"
 
-Object::Object(const aiMesh *t_mesh , const aiMatrix4x4 t_transformation) : m_name(t_mesh->mName.C_Str()), m_mesh(init(t_mesh)), m_transformation(t_transformation)
+Object::Object(const aiMesh *t_mesh , const aiMatrix4x4 t_transformation) : m_mesh(init(t_mesh,t_transformation,std::string(t_mesh->mName.C_Str()))), m_transformation(t_transformation)
 {
 }
 
@@ -19,19 +21,42 @@ Object::~Object()
 
 }
 
+void Object::setUniqueObjIndex(int uidx) {
+    uniqueObjIdx = uidx;
+}
+
+bool Object::compareObjOnCentroid(const std::shared_ptr<Object> j) {
+    Point3d centrI = getCentroid();
+    Point3d centrJ = j->getCentroid();
+    if(centrI.z() == centrJ.z()) {
+        if(centrI.y() == centrJ.y())
+            return centrI.x() < centrJ.x();
+        else
+            return centrI.y() < centrJ.y();
+    } else 
+        return centrI.z() < centrJ.z();
+}
+
 // Converts aiMesh to Mesh
-Mesh Object::init(const aiMesh *t_mesh) {
+Mesh Object::init(const aiMesh *t_mesh, const aiMatrix4x4 &t_transformation, const std::string &t_name) {
+    std::vector<std::string> splitted;
+    boost::split(splitted,t_name,boost::is_any_of("."));
+    m_name = splitted[0];
     std::shared_ptr<Mesh3d> mesh3d(new Mesh3d());
     bool created;
     VertexProperty<Vector3d> vertexNormals;
     boost::tie(vertexNormals, created) = mesh3d->add_property_map<Vertex,Vector3d>("v:normal");
+    //aiVector3D blenderTranslation;
+    //aiVector3D sc;
+    //aiQuaternion rot;
+    //t_transformation.Decompose(sc,rot,blenderTranslation);
 
     std::vector<Vertex> vertexIdxes;
     std::vector<Point3d> points;
     for (int i = 0; i < t_mesh->mNumVertices; ++i)
     {
-        const aiVector3D point = t_mesh->mVertices[i];
-        const aiVector3D meshNormal = t_mesh->mNormals[i];
+        aiVector3D point = aiMatrix4x4(t_transformation)*t_mesh->mVertices[i];
+        aiVector3D meshNormal = aiMatrix3x3(t_transformation)*t_mesh->mNormals[i];
         Point3d p = Point3d(point[0],point[1],point[2]);
         points.push_back(p);
         Vertex v_id = mesh3d->add_vertex(p);

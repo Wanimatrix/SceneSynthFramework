@@ -18,6 +18,7 @@ Hu, Ruizhen, et al. "Interaction Context (ICON): Towards a Geometric Functionali
 // class Object;
 //using namespace SurfaceMesh;
 
+
 class IBS
 {
 

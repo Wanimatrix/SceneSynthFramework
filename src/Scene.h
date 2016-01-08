@@ -14,4 +14,5 @@ public:
 
 private:
     std::vector<std::shared_ptr<Object>> objects;
+    std::map<std::string,int> uniqueObjsCounter;
 };

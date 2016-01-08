@@ -2,6 +2,7 @@
 
 #include "Object.h"
 
+#include "Debug/DebugTools.h"
 #include <string>
 #include <sstream>
 #include <iostream>
@@ -13,6 +14,7 @@
 #include <assimp/DefaultLogger.hpp>     // logger
 
 
+aiMatrix4x4 blenderTransformation = aiMatrix4x4(1, 0, 0, 0, 0, 0, 1, 0, 0, -1, 0, 0, 0, 0, 0, 1);
 Scene SceneLoader::load(const std::string &path) {
     aiMatrix4x4 transformation = aiMatrix4x4();
 
@@ -25,7 +27,6 @@ Scene SceneLoader::load(const std::string &path) {
 
     importer.SetPropertyInteger("AI_CONFIG_PP_RVC_FLAGS", aiComponent_MESHES | aiComponent_MATERIALS | aiComponent_CAMERAS);
     const aiScene *aiScene = importer.ReadFile(path, 0 | aiProcess_RemoveComponent);
-    std::cout << "Meshes: " << aiScene->mNumCameras << std::endl;
 
     // If the import failed, report it
     if (!aiScene)
@@ -38,7 +39,11 @@ Scene SceneLoader::load(const std::string &path) {
     Scene scene;
 
     recursive_scene_setup(scene, aiScene, aiScene->mRootNode, transformation);
-
+    for(std::shared_ptr<Object> o : scene.getObjects()) {
+        DebugLogger::ss << o->getName() << std::endl;
+        DebugLogger::ss << o->getCentroid() << std::endl;
+    }
+    DebugLogger::log();
     return scene;
 }
 
@@ -60,7 +65,7 @@ void SceneLoader::recursive_scene_setup(Scene &scene, const aiScene *sc, const a
         aiMesh *mesh = sc->mMeshes[nd->mMeshes[n]];
         std::vector<std::string> splittedName;
         //boost::split(splittedName, std::string(mesh->mName.C_Str()), boost::is_any_of("_."));
-        std::shared_ptr<Object> o(new Object(/*splittedName[0], */mesh, newTrans));
+        std::shared_ptr<Object> o(new Object(/*splittedName[0], */mesh, blenderTransformation*newTrans));
         scene.addObject(o);
         //std::cout << "Mesh: " << mesh->mName.C_Str() << std::endl;
         //std::cout << "First  coordinate: (" << mesh->mVertices[0].x << "," << mesh->mVertices[0].y << "," << mesh->mVertices[0].z << ")" << std::endl;

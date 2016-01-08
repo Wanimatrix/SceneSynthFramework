@@ -1573,6 +1573,10 @@ AnalysisPhase/Sampler.h
 /cygdrive/c/Users/Wouter/Documents/Doctoraat/Implementation/SceneSynthesisFramework2/src/AnalysisPhase/Sampler.h
 memory
 -
+boost/algorithm/string.hpp
+-
+Debug/DebugTools.h
+/cygdrive/c/Users/Wouter/Documents/Doctoraat/Implementation/SceneSynthesisFramework2/src/Debug/DebugTools.h
 
 /cygdrive/c/Users/Wouter/Documents/Doctoraat/Implementation/SceneSynthesisFramework2/src/Object.h
 assimp/mesh.h
@@ -1580,6 +1584,8 @@ assimp/mesh.h
 assimp/matrix4x4.h
 -
 string
+-
+sstream
 -
 AnalysisPhase/Sampler.h
 /cygdrive/c/Users/Wouter/Documents/Doctoraat/Implementation/SceneSynthesisFramework2/src/AnalysisPhase/Sampler.h
@@ -1593,6 +1599,10 @@ Scene.h
 /cygdrive/c/Users/Wouter/Documents/Doctoraat/Implementation/SceneSynthesisFramework2/src/Scene.h
 iostream
 -
+boost/algorithm/string.hpp
+-
+Debug/DebugTools.h
+/cygdrive/c/Users/Wouter/Documents/Doctoraat/Implementation/SceneSynthesisFramework2/src/Debug/DebugTools.h
 
 /cygdrive/c/Users/Wouter/Documents/Doctoraat/Implementation/SceneSynthesisFramework2/src/Scene.h
 Object.h
@@ -1605,6 +1615,8 @@ SceneLoader.h
 /cygdrive/c/Users/Wouter/Documents/Doctoraat/Implementation/SceneSynthesisFramework2/src/SceneLoader.h
 Object.h
 /cygdrive/c/Users/Wouter/Documents/Doctoraat/Implementation/SceneSynthesisFramework2/src/Object.h
+Debug/DebugTools.h
+/cygdrive/c/Users/Wouter/Documents/Doctoraat/Implementation/SceneSynthesisFramework2/src/Debug/DebugTools.h
 string
 -
 sstream

@@ -5395,7 +5395,10 @@ CMakeFiles/sceneSynth.dir/src/Object.cpp.o
  ../../libs/eigen/Eigen/src/plugins/CommonCwiseUnaryOps.h
  ../../libs/eigen/Eigen/src/plugins/MatrixCwiseBinaryOps.h
  ../../libs/eigen/Eigen/src/plugins/MatrixCwiseUnaryOps.h
+ ../../libs/gnuplot-iostream/gnuplot-iostream.h
  /cygdrive/c/Users/Wouter/Documents/Doctoraat/Implementation/SceneSynthesisFramework2/src/AnalysisPhase/Sampler.h
+ /cygdrive/c/Users/Wouter/Documents/Doctoraat/Implementation/SceneSynthesisFramework2/src/Debug/DebugTools.h
+ /cygdrive/c/Users/Wouter/Documents/Doctoraat/Implementation/SceneSynthesisFramework2/src/Debug/Timer.h
  /cygdrive/c/Users/Wouter/Documents/Doctoraat/Implementation/SceneSynthesisFramework2/src/Mesh.h
  /cygdrive/c/Users/Wouter/Documents/Doctoraat/Implementation/SceneSynthesisFramework2/src/Object.cpp
  /cygdrive/c/Users/Wouter/Documents/Doctoraat/Implementation/SceneSynthesisFramework2/src/Object.h
@@ -5956,7 +5959,10 @@ CMakeFiles/sceneSynth.dir/src/Scene.cpp.o
  ../../libs/eigen/Eigen/src/plugins/CommonCwiseUnaryOps.h
  ../../libs/eigen/Eigen/src/plugins/MatrixCwiseBinaryOps.h
  ../../libs/eigen/Eigen/src/plugins/MatrixCwiseUnaryOps.h
+ ../../libs/gnuplot-iostream/gnuplot-iostream.h
  /cygdrive/c/Users/Wouter/Documents/Doctoraat/Implementation/SceneSynthesisFramework2/src/AnalysisPhase/Sampler.h
+ /cygdrive/c/Users/Wouter/Documents/Doctoraat/Implementation/SceneSynthesisFramework2/src/Debug/DebugTools.h
+ /cygdrive/c/Users/Wouter/Documents/Doctoraat/Implementation/SceneSynthesisFramework2/src/Debug/Timer.h
  /cygdrive/c/Users/Wouter/Documents/Doctoraat/Implementation/SceneSynthesisFramework2/src/Mesh.h
  /cygdrive/c/Users/Wouter/Documents/Doctoraat/Implementation/SceneSynthesisFramework2/src/Object.h
  /cygdrive/c/Users/Wouter/Documents/Doctoraat/Implementation/SceneSynthesisFramework2/src/Scene.cpp
@@ -6544,7 +6550,10 @@ CMakeFiles/sceneSynth.dir/src/SceneLoader.cpp.o
  ../../libs/eigen/Eigen/src/plugins/CommonCwiseUnaryOps.h
  ../../libs/eigen/Eigen/src/plugins/MatrixCwiseBinaryOps.h
  ../../libs/eigen/Eigen/src/plugins/MatrixCwiseUnaryOps.h
+ ../../libs/gnuplot-iostream/gnuplot-iostream.h
  /cygdrive/c/Users/Wouter/Documents/Doctoraat/Implementation/SceneSynthesisFramework2/src/AnalysisPhase/Sampler.h
+ /cygdrive/c/Users/Wouter/Documents/Doctoraat/Implementation/SceneSynthesisFramework2/src/Debug/DebugTools.h
+ /cygdrive/c/Users/Wouter/Documents/Doctoraat/Implementation/SceneSynthesisFramework2/src/Debug/Timer.h
  /cygdrive/c/Users/Wouter/Documents/Doctoraat/Implementation/SceneSynthesisFramework2/src/Mesh.h
  /cygdrive/c/Users/Wouter/Documents/Doctoraat/Implementation/SceneSynthesisFramework2/src/Object.h
  /cygdrive/c/Users/Wouter/Documents/Doctoraat/Implementation/SceneSynthesisFramework2/src/Scene.h

@@ -60,6 +60,24 @@ void Plotter::plotHist(const std::vector<double> &histData, const std::string &p
     afterPlot();
 }
 
+void Plotter::plotHeatMap(const std::vector<boost::tuple<int,int,double>> &heatMapData, const std::pair<double,double> colorRange, const std::string &plotTitle) {
+    assert(windowIdx != -1);
+    // gp << "set boxwidth 0.9 relative\n";
+    // gp << "set style data histograms\n";
+    // gp << "set style histogram cluster\n";
+    gp << "set palette rgbformula 10,13,33\n";
+    gp << "set cbrange [" << colorRange.first << ":" << colorRange.second << "]\n";
+    //gp << "set xrange [0:5]\n";
+    //gp << "set yrange [0:5]\n";
+    gp << "unset key\n";
+    gp << "plot '-' using 2:1:3 with image ";
+    //if(plotTitle != std::string("")) gp << "title \"" << plotTitle << "\"";
+    gp << getMultiWindow() << "\n";
+    gp.send1d(boost::make_tuple(heatMapData));
+
+    afterPlot();
+}
+
 void Plotter::multiWindow(int width, int height, int numGraphs, const std::string &windowTitle) {
     gp << "set multiplot layout " << height << "," << width << " rowsfirst ";
     if(windowTitle != std::string("")) gp << "title \"{/:Bold=15 " << windowTitle << "}\"";
@@ -105,7 +123,7 @@ void Plotter::afterPlot() {
 }
 
 void Plotter::setWindowTitle(const std::string &windowTitle) {
-     gp << "set term png title \"{/:Bold=15 " << windowTitle << "}\"";
+     gp << "set title \"{/:Bold=15 " << windowTitle << "}\"\n";
 }
 
 void Plotter::newWindow(const std::string &windowTitle, const std::string &savePath) {

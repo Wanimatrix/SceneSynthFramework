@@ -35,17 +35,34 @@ namespace experiments
     
     void writeSimilarities(const std::vector<std::shared_ptr<IBS>> &ibses, const std::string &fileName){
         std::ofstream fs;
+        std::vector<boost::tuple<int,int,double>> heatMapData;
+        std::vector<std::vector<double>> heatMapMat(ibses.size(), std::vector<double>(ibses.size()));
+        std::pair<double,double> minMax({5,1});
         fs.open(expPath+fileName+".txt");
         for(int i = 0; i < ibses.size(); i++) {
             auto ibsI = ibses[i];
-            for(int j = i+1; j < ibses.size(); j++) {
+            for(int j = i; j < ibses.size(); j++) {
                 auto ibsJ = ibses[j];
                 double sim = ibsI->getSimilarity(*ibsJ);
                 fs << ibsI->ibsObj->getName() << " vs " << ibsJ->ibsObj->getName() << " are " << sim << " similar." << std::endl;
+                heatMapMat[i][j] = sim;
+                heatMapMat[j][i] = sim;
+                if(minMax.first > sim) minMax.first = sim;
             }
         }
         fs.close();
+
+        for(int i = 0; i < heatMapMat.size(); i++) {
+            for(int j = 0; j < heatMapMat[i].size(); j++) {
+                heatMapData.push_back(boost::make_tuple(i,j,heatMapMat[i][j]));
+            }
+        }
     
+        Plotter::newWindow(std::string("Similarities Heatmap"),expPath+fileName+".png");
+        DebugLogger::ss << "Min: " << minMax.first << ", max: " << minMax.second;
+        DebugLogger::log();
+        Plotter::plotHeatMap(heatMapData,minMax,"Similarities Heatmap");
+
     }
     
     void computeFeatures(const std::vector<std::shared_ptr<IBS>> &ibses, bool plot = false){
@@ -55,9 +72,22 @@ namespace experiments
             IBS *ibs = &*ibses[i];
             ibs->computeGeomFeatures();
             ibs->computeTopoFeatures();
-            //if(plot)
-                //ibs->plotFeatures(expPath+"IBSFeat_"+ibs->ibsObj->getName()+".png");
+            if(plot)
+                ibs->plotFeatures(expPath+"IBSFeat_"+ibs->ibsObj->getName()+".png");
         }
+    }
+
+    bool compareIBS(const std::shared_ptr<IBS> i,const std::shared_ptr<IBS> j) {
+        return i->obj2->compareObjOnCentroid(j->obj2);
+        //Point3d centrI = i->obj2->getCentroid();
+        //Point3d centrJ = j->obj2->getCentroid();
+        //if(centrI.z() == centrJ.z()) {
+            //if(centrI.y() == centrJ.y())
+                //return centrI.x() < centrJ.z();
+            //else
+                //return centrI.y() < centrJ.y();
+        //} else 
+            //return centrI.z() < centrJ.z();
     }
 
     std::function<void(std::shared_ptr<Input>)> run[] = {
@@ -69,7 +99,7 @@ namespace experiments
             std::vector<std::shared_ptr<Object>> set1;
             std::vector<std::shared_ptr<Object>> set2;
             for(std::shared_ptr<Object> o : s.getObjects()) {
-                if(o->getName().find("Plane") != std::string::npos) set2.push_back(o);
+                if(o->getName(false).find("Plane") != std::string::npos) set2.push_back(o);
                 else set1.push_back(o);
             }
 
@@ -91,6 +121,7 @@ namespace experiments
             timer.stop();
             timer.printElapsedTime(std::string("Feature calculation"));
 
+            //std::sort(ibses.begin(),ibses.end(),compareIBS);
             writeSimilarities(ibses,"ibsSimilarities");
 
             // Display the result
@@ -101,12 +132,22 @@ namespace experiments
     auto experiments = std::vector<std::pair<ExpFuncIdx,std::vector<std::string>>>{
         /* EXPERIMENT 0: A plane with blocks on it */
         std::pair<ExpFuncIdx,std::vector<std::string>>(0,std::vector<std::string>{"blocksOnPlane"}),
-        /* EXPERIMENT 1: A plane with objects on it */
+        /* EXPERIMENT 1: A plane with different objects on it */
         std::pair<ExpFuncIdx,std::vector<std::string>>(0,std::vector<std::string>{"objsOnPlane"}),
-        /* EXPERIMENT 2: Distance from cubes to plane */
+        /* EXPERIMENT 2: Distance from cubes on plane to plane */
         std::pair<ExpFuncIdx,std::vector<std::string>>(0,std::vector<std::string>{"distToPlaneGround"}),
-        /* EXPERIMENT 3: Distance from cubes to plane */
-        std::pair<ExpFuncIdx,std::vector<std::string>>(0,std::vector<std::string>{"distToPlaneHeight"})
+        /* EXPERIMENT 3: Distance from cubes above plane to plane */
+        std::pair<ExpFuncIdx,std::vector<std::string>>(0,std::vector<std::string>{"distToPlaneHeight"}),
+        /* EXPERIMENT 4: Distance from cubes to plane */
+        std::pair<ExpFuncIdx,std::vector<std::string>>(0,std::vector<std::string>{"blockEnclosedInEachOtherCorners"}),
+        /* EXPERIMENT 5: Distance from cubes to plane */
+        std::pair<ExpFuncIdx,std::vector<std::string>>(0,std::vector<std::string>{"blockEnclosedInEachOtherGroundMiddle"}),
+        /* EXPERIMENT 6: Distance from cubes to plane */
+        std::pair<ExpFuncIdx,std::vector<std::string>>(0,std::vector<std::string>{"blockEnclosedInEachOtherGroundSide"}),
+        /* EXPERIMENT 7: Distance from cubes to plane */
+        std::pair<ExpFuncIdx,std::vector<std::string>>(0,std::vector<std::string>{"blockEnclosedInEachOtherHeightMiddle"}),
+        /* EXPERIMENT 8: Distance from cubes to plane */
+        std::pair<ExpFuncIdx,std::vector<std::string>>(0,std::vector<std::string>{"blockEnclosedInEachOtherHeightSide"})
     };
 }
 
@@ -121,8 +162,10 @@ int main(int argc, const char* argv[]) {
         int eNb = strtol(argv[i+1],0,10);
         std::shared_ptr<Input> input;
         std::vector<std::string> scenePaths;
-        for(std::string s: experiments::experiments[eNb].second) scenePaths.push_back(SCENE_FOLDER_PATH + s + std::string(".blend"));
-        if(!scenePaths.empty()) input = std::shared_ptr<Input>(new Input(scenePaths));
+        for(std::string s: experiments::experiments[eNb].second) 
+            scenePaths.push_back(SCENE_FOLDER_PATH + s + std::string(".blend"));
+        if(!scenePaths.empty()) 
+            input = std::shared_ptr<Input>(new Input(scenePaths));
 
         std::ostringstream path;
         path << EXP_PATH << eNb << "/";
