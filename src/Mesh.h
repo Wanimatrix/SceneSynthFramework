@@ -30,16 +30,29 @@ public:
         return propMap;
     }
 
+    virtual Mesh cloneMesh() const
+    {
+        //Mesh3d mesh3dCopy = *mesh3d;
+        std::shared_ptr<Mesh3d> mesh3dCopyPtr(new Mesh3d(*mesh3d));
+        Mesh result(mesh3dCopyPtr);
+        assert(mesh3d!=result.mesh3d);
+        return result;
+    }
+    virtual Eigen::MatrixXd getVertices();
+    virtual Eigen::MatrixXi getFaces();
+
     //Mesh& operator= (const Mesh &t_mesh);
 
-public:
-    std::shared_ptr<Mesh3d> mesh3d;
 
 private:
     virtual Vector3d calculateFaceNormal(const Face &face) const;
     virtual Vector3d calculateVertexNormal(const Vertex &vertex) const;
     virtual double calculateFaceArea(const Face &face, const Vector3d &faceNormal) const;
 
+public:
+    std::shared_ptr<Mesh3d> mesh3d;
+
 private:
     double surfaceArea;
+    //Point3d centroid;
 };

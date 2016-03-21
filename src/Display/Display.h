@@ -12,5 +12,4 @@ class Display
 {
 public:
     static void display(const std::vector<std::shared_ptr<Object>> &objects, const std::string &save = std::string(""), bool display = true);
-    
 };

@@ -35,6 +35,8 @@ IbsGenerator::~IbsGenerator()
     }
     if(T)
         delete T;
+    DebugLogger::ss << "Qhull is deleted!";
+    DebugLogger::log();
 }
 
 void IbsGenerator::reset() {
@@ -61,6 +63,9 @@ void IbsGenerator::reset() {
     // meshSet.clear();
     ibsSet.clear();
     objects.clear();
+    
+    DebugLogger::ss << "Qhull is deleted!";
+    DebugLogger::log();
 }
 
 std::vector<std::shared_ptr<IBS>> IbsGenerator::computeIBSForEachTwoObjs(std::vector<std::shared_ptr<Object>> objs)
@@ -71,7 +76,6 @@ std::vector<std::shared_ptr<IBS>> IbsGenerator::computeIBSForEachTwoObjs(std::ve
     {
         for (int j = i+1; j < objs.size(); ++j)
         {
-            if (qhull) reset();
             timer.start();
             std::vector<std::shared_ptr<IBS>> ibses = computeIBS(std::vector<std::shared_ptr<Object>>({objs[i],objs[j]}));
             timer.printElapsedTime("IBS");
@@ -90,8 +94,26 @@ std::vector<std::shared_ptr<IBS>> IbsGenerator::computeIBSBetweenTwoSets(std::ve
     {
         for (int j = 0; j < objs2.size(); ++j)
         {
-            reset();
             timer.start();
+            std::vector<std::shared_ptr<IBS>> ibses = computeIBS(std::vector<std::shared_ptr<Object>>({objs1[i],objs2[j]}));
+            timer.printElapsedTime("IBS");
+            result.insert(result.end(),ibses.begin(),ibses.end());
+        }
+    }
+ 
+    return result;
+}
+
+std::vector<std::shared_ptr<IBS>> IbsGenerator::computeIBSBetweenTwoSetsCtxSample(std::vector<std::shared_ptr<Object>> objs1, std::vector<std::shared_ptr<Object>> objs2)
+{
+    std::vector<std::shared_ptr<IBS>> result;
+    int i;
+    for (i = 0; i < objs1.size(); ++i)
+    {
+        for (int j = 0; j < objs2.size(); ++j)
+        {
+            timer.start();
+            objs1[i]->sampleNonUniform(objs1[i]->getUniformSamples().size(),objs2[j]);
             std::vector<std::shared_ptr<IBS>> ibses = computeIBS(std::vector<std::shared_ptr<Object>>({objs1[i],objs2[j]}));
             timer.printElapsedTime("IBS");
             result.insert(result.end(),ibses.begin(),ibses.end());
@@ -105,20 +127,30 @@ int counterQHULL = 0;
 
 std::vector<std::shared_ptr<IBS>> IbsGenerator::computeIBS(std::vector<std::shared_ptr<Object>> objs)
 {
+    if(qhull) reset();
     // scene = s;
     objects = objs;
 
     //computeVoronoiCGAL();
+    DebugLogger::ss << "Computing Voronoi...";
+    DebugLogger::log();
     computeVoronoi();
+    DebugLogger::ss << "Vornoi calculated";
+    DebugLogger::log();
     //findRidgesCGAL();
+    DebugLogger::ss << "Searching ridges ...";
+    DebugLogger::log();
     findRidges();
+    DebugLogger::ss << "Ridges found";
+    DebugLogger::log();
     //DebugLogger::ss << "CGAL counter : " << counterCGAL;
     //DebugLogger::log();
     //DebugLogger::ss << "Qhull counter : " << counterQHULL;
     //DebugLogger::log();
     //exit(1);
+    DebugLogger::ss << "Building IBS...";
+    DebugLogger::log();
     buildIBS();
-
     DebugLogger::ss << "IBS calculated ..." << std::endl;
     DebugLogger::log();
 
@@ -202,8 +234,13 @@ void IbsGenerator::computeVoronoiCGAL()
 
 void IbsGenerator::computeVoronoi()
 {
+    DebugLogger::ss << "Fetching Voronoi input";
+    DebugLogger::log();
     std::vector<Point3d> points = getInputForVoronoi();
     std::vector<double> pointCoords;
+
+    DebugLogger::ss << "Voronoi input fetched";
+    DebugLogger::log();
 
     //std::stringstream sstr;
     //sstr << "../../Data/Experiments/0/ibs_" << global_ibsCounter++ << "_data.txt";
@@ -222,11 +259,28 @@ void IbsGenerator::computeVoronoi()
         //out << points[i/3].x() << " " << points[i/3].y() << " " << points[i/3].z() << std::endl;
     }
     //out.close();
+    //
+    DebugLogger::ss << "Actually calculating a Qhull";
+    DebugLogger::log();
+    DebugLogger::ss << "Amount samples: " << points.size();
+    DebugLogger::log();
 
+    DebugTimer timer2;
+    timer2.start();
+
+    DebugLogger::ss << "Voronoi calculation with " << pointCoords.size() << " Pointcoords";
+    DebugLogger::log();
     // use Qhull to create Voronoi diagram
     if(!qhull) qhull = new orgQhull::Qhull("", 3, (int)points.size(), pointCoords.data(), "v Qt");
     else throw std::invalid_argument( "qhull was already initialized!" );
+    DebugLogger::ss << "Voronoi calculated ...";
+    DebugLogger::log();
     //qhull->runQhull("", 3, (int)points.size(), pointCoords.data(), "v");
+    //
+    timer2.printElapsedTime("Qhull v qt");
+    //
+    DebugLogger::ss << "Qhull is initialized!!";
+    DebugLogger::log();
  
     voronoiVertices.push_back(Point3d(0, 0, 0)); // the index of vertices start from 1, 0 is for the infinite one
     for ( orgQhull::QhullFacet facet = qhull->firstFacet(); facet != qhull->endFacet(); facet=facet.next() )
@@ -253,14 +307,21 @@ std::vector<Point3d> IbsGenerator::getInputForVoronoi()
     std::vector<Point3d> points;
     std::vector<Object> objects2;
 
+
     // 1. get the sample points on the objects
     for (int i=0; i<objects.size(); i++)
     {
         std::shared_ptr<Object> obj = objects[i];
         objects2.push_back(*obj);
 
+        DebugLogger::ss << "Object name: " << obj->getName();
+        DebugLogger::log();
+
         int idx = 0;
-        for (auto sample : obj->getSamples())
+        std::shared_ptr<Object> otherObj = (i==0 ? objects[1] : objects[0]);
+        DebugLogger::ss << "Fetching samples on " << obj->getName() << " with distanceWeights towards " << otherObj->getName();
+        DebugLogger::log();
+        for (auto sample : obj->getActiveSamples(i==0 ? objects[1] : objects[0]))
         {
             points.push_back(sample.pos);
             sampleObjIdx.push_back(i);            // index the corresponding object index
@@ -772,6 +833,7 @@ void IbsGenerator::buildIBS()
         // std::vector<std::pair<int, int>> samplePairs;
         // meshSet.push_back(buildIbsMesh(i, samplePairs)); // ibs->samplePairs
         ibsSet.push_back(ibs);
+        sstr.str("");
     }
 }
 
@@ -855,7 +917,7 @@ Mesh IbsGenerator::buildIbsMesh( int i,  std::vector<std::pair<int, int>>& sampl
     int ridge_id = ibsRidgeIdxs[i][0];
     int *pair = ridgeSitePair[ridge_id];
     int sIdx = pair[1];
-    Point3d s2 = objects[sampleObjIdx[sIdx]]->getSamples()[sampleLocalIdx[sIdx]].pos;
+    Point3d s2 = objects[sampleObjIdx[sIdx]]->getActiveSamples(sampleObjIdx[sIdx] == 0 ? objects[1] : objects[0])[sampleLocalIdx[sIdx]].pos;
     Vector3d d = (s2 - center); // .normalized();
     d = d / std::sqrt(d.squared_length());
 

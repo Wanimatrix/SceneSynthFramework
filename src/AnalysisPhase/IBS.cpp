@@ -6,7 +6,6 @@ Hu, Ruizhen, et al. "Interaction Context (ICON): Towards a Geometric Functionali
 
 #include "IBS.h"
 #include "../Debug/DebugTools.h"
-#include <Eigen/Dense>
 // #include "Scene.h"
 //#include "QuickMeshDraw.h"
 //#include "RenderObjectExt.h"
@@ -26,7 +25,7 @@ IBS::IBS()
     bettiNumbers.push_back(0);
     bettiNumbers.push_back(0);
     bettiNumbers.push_back(0);
-    upright = Vector3d(0,0,1);
+    upright = Vector3d(0,1,0);
 }
 
 
@@ -48,14 +47,15 @@ IBS::IBS(const std::vector<std::shared_ptr<Object>> &objects)
     bettiNumbers.push_back(0);
     bettiNumbers.push_back(0);
     bettiNumbers.push_back(0);
-    upright = Vector3d(0,0,1);
+    upright = Vector3d(0,1,0);
 }
 
 IBS::~IBS()
 {
 }
 
-void IBS::plotFeatures(const std::string &savePath) {
+void IBS::plotFeatures(const std::string &savePath) 
+{
     Plotter::newMultiWindow(2,2,std::string("IBS features"),savePath);
     Plotter::plotHist(pfh,"PFH");
     Plotter::plotHist(dirHist,"DIR");
@@ -66,11 +66,19 @@ void IBS::plotFeatures(const std::string &savePath) {
         static_cast<double>(bettiNumbers[2])}),"BETTI");
 }
 
-double IBS::getSimilarity(const IBS &other, bool w, double a, double b, double c) {
+double IBS::getSimilarity(const IBS &other, bool w, double a, double b, double c) 
+{
     assert(a+b+c == 1);
     assert(pfh.size() == 250);
     assert(dirHist.size() == 10);
     assert(distHist.size() == 10);
+
+    std::vector<double> invertedDirHist(dirHist.size());
+    
+    for (int i = 0; i < invertedDirHist.size()/2; i++){
+        invertedDirHist[invertedDirHist.size()-1-i] = dirHist[i];
+        invertedDirHist[i] = dirHist[dirHist.size()-1-i];
+    }
 
     bool topoSame = false;
     if(w) {
@@ -79,26 +87,32 @@ double IBS::getSimilarity(const IBS &other, bool w, double a, double b, double c
         topoSame = topoSame && bettiNumbers[2] == other.bettiNumbers[2];
     }
 
+    //DebugLogger::ss << "Mapping vectors on Eigen vectors...";
+    //DebugLogger::log();
     Eigen::Map<const Eigen::VectorXd> thisPfh(pfh.data(),pfh.size());
     Eigen::Map<const Eigen::VectorXd> otherPfh(other.pfh.data(),other.pfh.size());
 
     Eigen::Map<const Eigen::VectorXd> thisDir(dirHist.data(),dirHist.size());
+    Eigen::Map<const Eigen::VectorXd> thisInvertedDir(invertedDirHist.data(),invertedDirHist.size());
     Eigen::Map<const Eigen::VectorXd> otherDir(other.dirHist.data(),other.dirHist.size());
 
     Eigen::Map<const Eigen::VectorXd> thisDist(distHist.data(),distHist.size());
     Eigen::Map<const Eigen::VectorXd> otherDist(other.distHist.data(),other.distHist.size());
+
+    //DebugLogger::ss << "Vectors mapped on eigen...";
+    //DebugLogger::log();
 
     /*Eigen::Map<const Eigen::VectorXd> pfhDiff = Eigen::Map<const Eigen::VectorXd>(thisPfh-otherPfh);
     Eigen::Map<const Eigen::VectorXd> dirDiff = (thisDir-otherDir);
     Eigen::Map<const Eigen::VectorXd> distDiff = (thisDist-otherDist);*/
 
     double l1Pfh = (thisPfh-otherPfh).cwiseAbs().sum();
-    double l1Dist = (thisDir-otherDir).cwiseAbs().sum();
+    double l1Dist = std::min((thisDir-otherDir).cwiseAbs().sum(),(thisInvertedDir-otherDir).cwiseAbs().sum());
     double l1Dir = (thisDist-otherDist).cwiseAbs().sum();
 
-    std::cout << thisPfh.sum() << " " << otherPfh.sum() << std::endl;
+    //std::cout << thisPfh.sum() << " " << otherPfh.sum() << std::endl;
 
-    std::cout << l1Pfh << " " << l1Dist << " " << l1Dir << std::endl;
+    //std::cout << l1Pfh << " " << l1Dist << " " << l1Dir << std::endl;
 
     double geoDist = a * l1Pfh + b * l1Dir + c * l1Dist;
 
@@ -194,7 +208,7 @@ void IBS::computeSampleWeightForTri()            // according to Xi's IBS paper
     {
         fweight[f_id] = 0;
         int idx = samplePairs[static_cast<int>(f_id)].second;
-        Point3d s = obj2->getSamples()[idx].pos;
+        Point3d s = obj2->getActiveSamples(obj1)[idx].pos;
 
         Point3d center(0,0,0);
         std::vector<Vertex> faceVertices = mesh.getVerticesOfFace(f_id);
@@ -365,6 +379,22 @@ void IBS::computeDirHist()
     }    
 
     dirHist = h;
+
+    //bool invert = false;
+    //for (int i = 0; i <= dirHist.size()/2; i++){
+        //if(dirHist[i] < dirHist[dirHist.size()-1-i]) {
+            //break;
+        //}
+        //else if(dirHist[i] > dirHist[dirHist.size()-1-i]) {
+            //invert = true;
+            //break;
+        //}
+    //}
+    //if (invert) {
+        //for (int i = 0; i <= dirHist.size()/2; i++){
+            //std::swap(dirHist[i],dirHist[dirHist.size()-1-i]);
+        //}
+    //}
 }
 
 void IBS::computeDistHist()
@@ -388,7 +418,7 @@ void IBS::computeDistHist()
 
     for (auto s:samples)
     {
-        Point3d site = obj1->getSamples()[samplePairs[s.findex].first].pos;
+        Point3d site = obj1->getActiveSamples(obj2)[samplePairs[s.findex].first].pos;
         double d = std::sqrt((s.pos - site).squared_length());
 
         int bIdx = (int) (d / th * 10);
@@ -401,7 +431,7 @@ void IBS::computeDistHist()
     {
         v /= samples.size();
     }
-
+   
 }
 
 std::vector<double> IBS::computePfhForSample( int sIdx, bool reverseNormal )
@@ -608,6 +638,9 @@ void IBS::computeBettiNumbers()
 
     DebugLogger::ss << "New code --- Time elapsed: " << t.getElapsedTime() << " ms";
     DebugLogger::log();
+
+    // IMPORTANT!: clear property maps in case we want to recalculate betti numbers after shape movement.
+    mesh3d->remove_property_map(edgeComplexIdx);
 
     //ignoreSmallHoles();
 }

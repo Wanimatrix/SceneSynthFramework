@@ -23,6 +23,11 @@ Mesh::Mesh(std::shared_ptr<Mesh3d> t_mesh) : mesh3d(t_mesh) {
         fAreas[f_id] = calculateFaceArea(f_id, fNormals[f_id]);
         surfaceArea += fAreas[f_id];
     }
+
+    std::vector<Point3d> pts;
+    BOOST_FOREACH(Vertex v_id, mesh3d->vertices())
+        pts.push_back(mesh3d->point(v_id));
+
 }
 
 Mesh::~Mesh() {
@@ -112,6 +117,40 @@ double Mesh::calculateFaceArea(const Face &face, const Vector3d &faceNormal) con
 
     normal = normal / std::sqrt(normal.squared_length());
     return std::abs(normal * total)/2.0;
+}
+
+
+Eigen::MatrixXd Mesh::getVertices()
+{
+    // Init eigenmesh matrices
+    Eigen::MatrixXd vertices(mesh3d->vertices().size(),3);
+
+    // Store vertices in eigenMesh
+    for(Vertex v : mesh3d->vertices())
+    {
+        Point3d point = mesh3d->point(v);
+        vertices(v,0) = point.x();
+        vertices(v,1) = point.y();
+        vertices(v,2) = point.z();
+    }
+
+    return vertices;
+}
+
+Eigen::MatrixXi Mesh::getFaces()
+{
+    Eigen::MatrixXi faces(mesh3d->faces().size(),3);
+
+    // Store faces in eigenMesh
+    for(Face f : mesh3d->faces())
+    {
+        std::vector<Vertex> faceVertices = getVerticesOfFace(f);
+        faces(f,0) = faceVertices[0];
+        faces(f,1) = faceVertices[1];
+        faces(f,2) = faceVertices[2];
+    }
+
+    return faces;
 }
 
 /*Mesh& Mesh::operator=(const Mesh &t_mesh) {

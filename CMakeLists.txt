@@ -33,8 +33,8 @@ if (DEBUG)
 endif ()
 
 
-#[[set ( LIBRARY_LINKS_LST "")
-set ( DLLS_TO_COPY "")]]
+set ( LIBRARY_LINKS_LST "")
+set ( DLLS_TO_COPY "")
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ../bin)
 
@@ -55,6 +55,9 @@ set ( LIB_DIR ${CMAKE_SOURCE_DIR}/../libs)
 
     ## EIGEN
     include_directories ( ${LIB_DIR}/eigen )
+
+    ## IGL
+    include_directories ( ${LIB_DIR}/libigl/include )
 
     ## Qhull
     set ( QHULL_DIR /usr/local)

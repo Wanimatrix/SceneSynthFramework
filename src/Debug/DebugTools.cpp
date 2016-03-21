@@ -5,22 +5,39 @@
 // DebugLogger
 // -----------
 std::ostringstream DebugLogger::ss;
+bool DebugLogger::onBool = true;
 
 #ifdef DEBUG
     void DebugLogger::log() {
-        std::cout << DebugLogger::ss.str() << std::endl;
+        if(DebugLogger::onBool) std::cout << DebugLogger::ss.str() << std::endl;
         DebugLogger::ss.str("");
     }
 #else
     void DebugLogger::log() {}
 #endif
 
+void DebugLogger::on()
+{
+    DebugLogger::onBool = true;
+}
+
+void DebugLogger::off()
+{
+    DebugLogger::onBool = false;
+}
 
 // DebugTimer
 // ----------
 #ifdef PERFTIMER
     void DebugTimer::start() {timer.start();}
-    void DebugTimer::stop() {timer.stop();}
+    void DebugTimer::stop(TimerStopAction stopAction, std::string stringArg) {
+        timer.stop();
+        if(TimerStopAction::PRINT) printElapsedTime(stringArg);
+
+    }
+    void DebugTimer::stop(std::string stringArg) {
+        stop(TimerStopAction::PRINT,stringArg);
+    }
     double DebugTimer::getElapsedTime() {
         timer.stop();
         return timer.getElapsedTime();
@@ -60,7 +77,8 @@ void Plotter::plotHist(const std::vector<double> &histData, const std::string &p
     afterPlot();
 }
 
-void Plotter::plotHeatMap(const std::vector<boost::tuple<int,int,double>> &heatMapData, const std::pair<double,double> colorRange, const std::string &plotTitle) {
+
+void Plotter::plotHeatMap(const std::vector<boost::tuple<int,std::string,int,std::string,double>> &heatMapData, const std::pair<double,double> colorRange, const std::string &plotTitle) {
     assert(windowIdx != -1);
     // gp << "set boxwidth 0.9 relative\n";
     // gp << "set style data histograms\n";
@@ -70,7 +88,8 @@ void Plotter::plotHeatMap(const std::vector<boost::tuple<int,int,double>> &heatM
     //gp << "set xrange [0:5]\n";
     //gp << "set yrange [0:5]\n";
     gp << "unset key\n";
-    gp << "plot '-' using 2:1:3 with image ";
+    gp << "set xtics rotate\n";
+    gp << "plot '-' using 1:3:5:xtic(2):ytic(4) with image ";
     //if(plotTitle != std::string("")) gp << "title \"" << plotTitle << "\"";
     gp << getMultiWindow() << "\n";
     gp.send1d(boost::make_tuple(heatMapData));
@@ -102,6 +121,8 @@ std::string Plotter::getMultiWindow() {
 }
 
 void Plotter::nextMultiWindow() {
+    DebugLogger::ss << "index: " << multiWindowIdx;
+    DebugLogger::log();
     assert(multiWindowIdx != -1);
     multiWindowIdx++;
     if(multiWindowIdx > multiWindowDims.first * multiWindowDims.second 

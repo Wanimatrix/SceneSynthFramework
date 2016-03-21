@@ -6,6 +6,7 @@ include_directories(AnalysisPhase)
 include_directories(Debug)
 include_directories(Display)
 include_directories(Experiments)
+include_directories(Utilities)
 include_directories(/usr/local/include)
 
 link_directories ( /usr/local/lib )

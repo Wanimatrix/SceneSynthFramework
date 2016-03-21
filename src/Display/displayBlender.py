@@ -24,6 +24,16 @@ for line in f:
     bpy.ops.import_scene.obj(filepath=line)
 f.close()
 
+ibsMaterial = bpy.data.materials['IBSColor']
+objectMaterial = bpy.data.materials['SceneColor']
+
+for obj in bpy.data.objects:
+  if obj.type == 'MESH':
+    if "ibs" in obj.name:
+      obj.data.materials.append(ibsMaterial)
+    else:
+      obj.data.materials.append(objectMaterial)
+
 # Center screen to all objects
 for area in bpy.context.screen.areas:
     if area.type == 'VIEW_3D':

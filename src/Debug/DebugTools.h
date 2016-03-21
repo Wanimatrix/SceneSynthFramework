@@ -15,11 +15,17 @@ class DebugLogger
 public:
     static std::ostringstream ss;
     static void log();
+    static void on();
+    static void off();
+private:
+    static bool onBool;
 };
-
 
 // DebugTimer
 // ----------
+enum TimerStopAction {
+    SAVE,PRINT
+};
 class DebugTimer
 {
 public:
@@ -27,7 +33,8 @@ public:
     virtual ~DebugTimer() {}
 
     virtual void start();
-    virtual void stop();
+    virtual void stop(const TimerStopAction stopAction, const std::string stringArg = "");
+    virtual void stop(const std::string stringArg = "");
     virtual double getElapsedTime();
     virtual void printElapsedTime(const std::string &eventName);
 private:
@@ -42,7 +49,7 @@ class Plotter
 {
 public:
     static void plotHist(const std::vector<double> &histData, const std::string &plotTitle = std::string(""));
-    static void plotHeatMap(const std::vector<boost::tuple<int,int,double>> &heatMapData, const std::pair<double,double> colorRange, const std::string &plotTitle = std::string(""));
+    static void plotHeatMap(const std::vector<boost::tuple<int,std::string,int,std::string,double>> &heatMapData, const std::pair<double,double> colorRange, const std::string &plotTitle = std::string(""));
     static void newWindow(const std::string &windowTitle, const std::string &savePath = std::string(""));
     static void newMultiWindow(int width, int height, const std::string &windowTitle = std::string(""), const std::string &savePath = std::string(""), int numGraphs = -1);
 private:
