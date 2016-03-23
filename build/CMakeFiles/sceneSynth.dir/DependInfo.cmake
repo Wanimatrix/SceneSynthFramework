@@ -39,6 +39,7 @@ set(CMAKE_TARGET_DEFINITIONS_CXX
   "DEBUG"
   "EXP"
   "PERFTIMER"
+  "SYMBOLS"
   )
 
 # The include file search paths:

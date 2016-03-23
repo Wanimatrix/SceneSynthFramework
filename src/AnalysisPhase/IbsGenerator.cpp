@@ -288,6 +288,9 @@ void IbsGenerator::computeVoronoi()
         orgQhull::QhullPoint p = facet.voronoiVertex();
         voronoiVertices.push_back(Point3d(p[0], p[1], p[2]));
     }
+
+    DebugLogger::ss << "VoronoiVertices size: " << voronoiVertices.size();
+    DebugLogger::log();
     //DebugLogger::ss << "Amount of points QHull: " << qhull->qh()->num_vertices;
     //DebugLogger::log();
     //DebugLogger::ss << "Amount of facets: " << qhull->qh()->num_facets;
@@ -635,6 +638,8 @@ void IbsGenerator::findRidges()
 /// libqhull\io.c -> qh_eachvoronoi
 int IbsGenerator::findRidgesAroundVertex(vertexT *atvertex)
 {
+    //DebugLogger::ss << "Finding ridge around vertex...";
+    //DebugLogger::log();
     // parameters
     qh_RIDGE innerouter = qh_RIDGEall;
     printvridgeT printvridge = qh_printvridge;
@@ -670,14 +675,21 @@ int IbsGenerator::findRidgesAroundVertex(vertexT *atvertex)
     FOREACHneighbor_(atvertex) { // For each Voronoi-vertex of the cell of atvertex
         //DebugLogger::ss << "Call amount first loop: " << ++check2;
         //DebugLogger::log();
+        //DebugLogger::ss << "FOREACH neighbor of vertex ...";
+        //DebugLogger::log();
         if (neighbor->seen) {
+            //DebugLogger::ss << "Nieghbor was already seen ...";
             int check = 0;
             FOREACHvertex_(neighbor->vertices) { // For each Voronoi cell (= input site) incident on nb
+                //DebugLogger::ss << "FOREACH vertex of neighbor ...";
+                //DebugLogger::log();
                 int obj_id_1 = sampleObjIdx[qh_pointid(qhull->qh(),atvertex->point)];
                 int obj_id_2 = sampleObjIdx[qh_pointid(qhull->qh(),vertex->point)];
                 if (vertex->visitid != qhull->qh()->vertex_visit // To make sure we don't visit a cell twice when it shares multiple vertices with this cell
                   && !vertex->seen // Only check ridges that were not visited before (its vertex is already seen)
                   && ( obj_id_1 != -1 && obj_id_2 != -1 && ( obj_id_1 != obj_id_2 ) )) { 
+                    //DebugLogger::ss << "Ridge is ok ...";
+                    //DebugLogger::log();
                     //counterQHULL++;
                     vertex->visitid= qhull->qh()->vertex_visit; 
                     count= 0; // Counts amount of vertices on ridge between atvertex and vertex
@@ -695,8 +707,12 @@ int IbsGenerator::findRidgesAroundVertex(vertexT *atvertex)
                             }
                         }
                     }
+                    DebugLogger::ss << "Inner count: " << count;
+                    DebugLogger::log();
 
                     if (count >= qhull->qh()->hull_dim - 1) { // Each ridge has to have at least hull_dim - 1 vertices
+                        //DebugLogger::ss << "Ridge has correct # vertices ...";
+                        //DebugLogger::log();
                         if (firstinf) { // Ridge is not on the border
                             if (innerouter == qh_RIDGEouter) // If we want only the border, don't use this ridge
                                 continue;

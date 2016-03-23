@@ -184,7 +184,7 @@ EXPS:UNINITIALIZED=ON
 PERF:UNINITIALIZED=ON
 
 //No help, variable specified on the command line.
-SYMBOLS:UNINITIALIZED=OFF
+SYMBOLS:UNINITIALIZED=ON
 
 //Value Computed by CMake
 sceneSynth_BINARY_DIR:STATIC=/cygdrive/c/Users/Wouter/Documents/Doctoraat/Implementation/SceneSynthesisFramework2/build

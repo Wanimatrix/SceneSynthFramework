@@ -1,0 +1,8 @@
+#!/bin/bash
+SAMPLE_SCHEMES=(uniform,importance_distance,importance_distance_hullapprox)
+if [ -z "$1" ]; then
+  echo usage: $0 "SampleScheme"
+  exit
+fi
+SAMPLE=$1
+ls ../../../../Data/SceneDB/ | sed -e '/.blend$/ !d' -e 's@\([a-zA-Z0-9.]*\)_\([a-zA-Z.0-9]*\).blend@../bin/sceneSynth.exe -s '$SAMPLE' --centralObj \2 \1 \1_\2@' | source /dev/stdin

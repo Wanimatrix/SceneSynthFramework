@@ -1,0 +1,108 @@
+#!/bin/bash 
+SAMPLESCHEMES=(importance_distance importance_distance_hullapprox) # (uniform importance_distance) # importance_distance_hullapprox)
+function escape_ { echo $1 | sed 's/_/\\\\_/g';}
+function combine { local IFS="$1"; shift; echo "$*";}
+FILES=()
+for i in "${SAMPLESCHEMES[@]}"; do
+  FILES+=(/cygdrive/c/Users/Wouter/Documents/Data/Experiments/IBSSimilarity/$i/$(basename "$1" | sed 's/_\(.*\)//')/ibsSimilarities.txt)
+done
+PLOTDATA=()
+for i in "${!SAMPLESCHEMES[@]}"; do
+  DATA=()
+  DATA=($(sed 's/ibs_\([^_]*\)_\([^_]*\)_\([^_]*\)_\([^ ]*\)/\1 \3/' ${FILES[$i]}))
+  NEWDATA=()
+  TMP=()
+  z=0
+  min=100
+  max=-100
+  for ((j=0;j<${#DATA[@]};j++)); do
+    NEWDATA[$((z++))]=${DATA[$j]}
+    if [[ $(($j % 3)) == 2 ]]; then
+      if [[ `echo "${DATA[$j]} > $max" | bc` == 1 ]]; then max="${DATA[$j]}"; fi
+      if [[ `echo "${DATA[$j]} < $min" | bc` == 1 ]]; then min="${DATA[$j]}"; fi
+      NEWDATA[$((z++))]="\n"
+      if [[ "${NEWDATA[$((z-6))]}" != "${NEWDATA[$((z-4))]}" ]]; then
+        for ((iz=0;iz<5;iz++)); do
+          if [[ $iz == 0 || $iz == 1 ]]; then
+            NEWDATA[$((z++))]=${NEWDATA[$((z-6+2))]}
+          elif [[ $iz == 2 || $iz == 3 ]]; then
+            NEWDATA[$((z++))]=${NEWDATA[$((z-6-2))]}
+          else
+            NEWDATA[$((z++))]=${NEWDATA[$((z-6))]}
+          fi
+        done
+        NEWDATA[$((z++))]="\n"
+      fi
+      continue
+    fi
+    oldZ=$z
+    #if [[ $(($j % 3)) == 0 ]]; then
+      for k in "${!TMP[@]}"; do 
+        if [[ ${DATA[$j]} == ${TMP[$k]} ]]; then
+          NEWDATA[$((z++))]=$k
+        fi
+      done
+      if [[ $oldZ == $z ]]; then
+        TMP+=(${DATA[$j]})
+        NEWDATA[$((z++))]=$((${#TMP[@]}-1))
+      fi
+  done
+  RESULT=$(combine " " ${NEWDATA[@]})
+  RESULT=$(echo $RESULT | sed 's/ \\n /\\n/g' )
+  RESULT=$(printf "$RESULT")
+  RESULT=$(echo "$RESULT" | sed 's/\([^ ]*\) \([^ ]*\) \([^ ]*\) \([^ ]*\)/\2 \4 \1 \3/')
+  RESULT=$(sort -n -k1,1 -k2,2 <<<"$RESULT")
+  PLOTDATA+=("$RESULT")
+  #echo "$RESULT" | awk '{print $5}'
+  #awk 'tmp[FNR] {tmp[FNR]+=$5;next} {tmp[FNR]=$5} END {for(t in tmp) print tmp[t]}' <<< "$RESULT" <<< "$RESULT"
+  #exit
+  #join -j 3 "$FINAL" "$RESULT" | echo
+done
+#printf '%s\n_EOF_\n' "${PLOTDATA[@]}"
+COMBINED=$(printf '%s\n_EOF_\n' "${PLOTDATA[@]}")
+SIMDIFF=$(echo -n "$COMBINED" | awk '
+  function abs(x){return ((x < 0.0) ? -x : x)}
+  $1=="_EOF_"{fnr++;FNR=0;next} 
+  tmp[FNR] {tmp[FNR]-=$5;next} 
+  {tmp[FNR]=$5} 
+  END {for(t in tmp) {print abs(tmp[t])}}' fnr=0 | tr '\n' ',' | sed 's/,$//g')
+  SIMDIFF=$(echo "${PLOTDATA[0]}" | awk 'BEGIN {n=split("'"$SIMDIFF"'",sdarray,",")} {print $1,$2,$3,$4,sdarray[NR]} ')
+  max=$(echo "$SIMDIFF" | awk 'BEGIN{max = 0} {if($5 > max) max = $5} END{print max}')
+#awk 'EOF {fnr++;next} tmp[FNR] {tmp[FNR]+=$5;next} {tmp[FNR]=$5} END {for(t in tmp) print tmp[t]}' fnr=0 <<< $(printf '%s\nEOF\n' "${PLOTDATA[@]}")
+#for i in "${!PLOTDATA[@]}"; do
+  #if [[ $i != $((${#PLOTDATA[@]}-1)) ]]; then 
+    #FULLPLOTDATA=$(printf "$FULLPLOTDATA${PLOTDATA[$i]}\nNEXT")
+  #else
+    #FULLPLOTDATA="$FULLPLOTDATAn${PLOTDATA[$i]}"
+  #fi
+#done
+#echo "$FULLPLOTDATA"
+#echo "$PLOTDATA"
+#echo $(escape_ "${SAMPLESCHEMES[$i]}")
+{
+  # TODO: make column with unique index of occurrence
+  #for i in "${!SAMPLESCHEMES[@]}"; do
+    #echo "\$${SAMPLESCHEMES[$i]} << EOD"
+    ##echo "$(sed 's/ibs_\([^_]*\)_\([^_]*\)_\([^_]*\)_\([^ ]*\)/\1 \3/' ${FILES[$i]})"
+    #echo "${PLOTDATA[$i]}"
+    #echo "EOD"
+  #done
+  echo "\$data<< EOD"
+  #echo "$(sed 's/ibs_\([^_]*\)_\([^_]*\)_\([^_]*\)_\([^ ]*\)/\1 \3/' ${FILES[$i]})"
+  echo "$SIMDIFF"
+  echo "EOD"
+  echo "set palette rgbformula 10,13,33"
+  echo "set cbrange [0:$max]"
+  #echo "set yrange [-0.5:`echo "${#TMP[@]}+0.5" | br`]"
+  echo "unset key"
+  echo "set xtics rotate by -90"
+  #echo "print \$uniform"
+  #echo "plot \\"
+  #for i in "${!SAMPLESCHEMES[@]}"; do
+  echo "set term png";
+  echo "set output '../../../../Data/Experiments/IBSSimilarity/samplescheme_comparison/${SAMPLESCHEMES[0]}_${SAMPLESCHEMES[1]}/$(basename "$1" | sed 's/_\(.*\)//').png'";
+  echo "set title \"$(basename "$1" | sed 's/_\(.*\)//')\""
+  #echo "set term x11 $i"
+  echo "plot \"\$data\" u 1:2:5:xtic(3):ytic(4) w image"
+  #done
+} | gnuplot -persist
