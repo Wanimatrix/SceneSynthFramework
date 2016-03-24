@@ -685,6 +685,11 @@ int IbsGenerator::findRidgesAroundVertex(vertexT *atvertex)
                 //DebugLogger::log();
                 int obj_id_1 = sampleObjIdx[qh_pointid(qhull->qh(),atvertex->point)];
                 int obj_id_2 = sampleObjIdx[qh_pointid(qhull->qh(),vertex->point)];
+                // TODO: Use this output to fix the ibses.size() == 1 assert
+                //DebugLogger::ss << "IF checks: " << (vertex->visitid != qhull->qh()->vertex_visit);
+                //DebugLogger::ss << ", " << !vertex->seen;
+                //DebugLogger::ss << ", " << ( obj_id_1 != -1 && obj_id_2 != -1 && ( obj_id_1 != obj_id_2 ) );
+                //DebugLogger::log();
                 if (vertex->visitid != qhull->qh()->vertex_visit // To make sure we don't visit a cell twice when it shares multiple vertices with this cell
                   && !vertex->seen // Only check ridges that were not visited before (its vertex is already seen)
                   && ( obj_id_1 != -1 && obj_id_2 != -1 && ( obj_id_1 != obj_id_2 ) )) { 
@@ -707,8 +712,9 @@ int IbsGenerator::findRidgesAroundVertex(vertexT *atvertex)
                             }
                         }
                     }
-                    DebugLogger::ss << "Inner count: " << count;
-                    DebugLogger::log();
+                    // NEVER OUTPUT WHEN FOUND 0 RIDGES
+                    //DebugLogger::ss << "Inner count: " << count;
+                    //DebugLogger::log();
 
                     if (count >= qhull->qh()->hull_dim - 1) { // Each ridge has to have at least hull_dim - 1 vertices
                         //DebugLogger::ss << "Ridge has correct # vertices ...";
