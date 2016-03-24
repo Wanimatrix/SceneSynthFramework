@@ -54,7 +54,7 @@ std::pair<double,std::shared_ptr<IBS>> IBSFitEval::eval(Individual &i)
     if(chair->intersects(table))
     {
         sceneCleanup(chair);
-        return std::pair<double,std::shared_ptr<IBS>>(std::numeric_limits<double>::infinity(),std::shared_ptr<IBS>(nullptr));
+        return std::pair<double,std::shared_ptr<IBS>>(-std::numeric_limits<double>::infinity(),std::shared_ptr<IBS>(nullptr));
     }
     else
     {
@@ -83,17 +83,17 @@ std::pair<double,std::shared_ptr<IBS>> IBSFitEval::eval(Individual &i)
         DebugLogger::ss << "Calculating similarity...";
         DebugLogger::log();
         // Calculate similarity
-        double similarityDiff = std::abs(m_ibses[0]->getSimilarity(*ibses[0]));
-        DebugLogger::ss << "SimilarityDifference 0: " << similarityDiff << std::endl;
+        double similarity = m_ibses[0]->getSimilarity(*ibses[0]);
+        DebugLogger::ss << "Similarity 0: " << similarity << std::endl;
         DebugLogger::log();
         for(int i = 1; i < m_ibses.size(); i++) 
         {
-            double tmpSimilarityDiff = std::abs(m_ibses[i]->getSimilarity(*ibses[0]));
-            DebugLogger::ss << "SimilarityDifference " << i << ": " << tmpSimilarityDiff << std::endl;
+            double tmpSimilarity = m_ibses[i]->getSimilarity(*ibses[0]);
+            DebugLogger::ss << "Similarity " << i << ": " << tmpSimilarity << std::endl;
             DebugLogger::log();
-            if (tmpSimilarityDiff < similarityDiff)
+            if (tmpSimilarity > similarity)
             {
-                similarityDiff = tmpSimilarityDiff;
+                similarity = tmpSimilarity;
             }
         }
         //similarity /= m_ibses.size();
@@ -101,12 +101,12 @@ std::pair<double,std::shared_ptr<IBS>> IBSFitEval::eval(Individual &i)
         DebugLogger::log();
 
         std::ostringstream oss;
-        oss << i.name << "_" << similarityDiff;
+        oss << i.name << "_" << similarity;
         i.name = oss.str();        
 
         // Clean up the scene.
         sceneCleanup(chair);
         assert(ibsPtr);
-        return std::pair<double,std::shared_ptr<IBS>>(similarityDiff,ibsPtr);
+        return std::pair<double,std::shared_ptr<IBS>>(similarity,ibsPtr);
     }
 }

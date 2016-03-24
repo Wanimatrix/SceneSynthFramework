@@ -96,11 +96,11 @@ double GA::grade()
     double bestFitIdx = 0;
     for(int i = 1; i < m_population.size(); i++) {
         std::pair<double,std::shared_ptr<IBS>> indFit = fitness(i);
-        assert(indFit.second || indFit.first == std::numeric_limits<double>::infinity());
+        assert(indFit.second || indFit.first == -std::numeric_limits<double>::infinity());
         if(indFit.second)
             ibsObjs.push_back(indFit.second->ibsObj);
         popFitness += indFit.first;
-        if(indFit.first < bestFitness)
+        if(indFit.first > bestFitness)
         {
             bestFitness = indFit.first;
             bestFitIdx = i;
@@ -125,7 +125,7 @@ std::vector<Individual> GA::evolve()
         fitnessPairs.push_back(std::make_pair(fitness(i).first,m_population[i]));
     }
     std::sort(fitnessPairs.begin(), fitnessPairs.end(), [](std::pair<double,Individual> a,std::pair<double,Individual> b) {
-        return a.first < b.first;
+        return a.first > b.first;
     });
 
     // Keep best individuals as parents for the next gen

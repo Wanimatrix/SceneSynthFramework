@@ -75,13 +75,15 @@ double IBS::getSimilarity(const IBS &other, bool w, double a, double b, double c
 
     std::vector<double> invertedDirHist(dirHist.size());
     
-    for (int i = 0; i < invertedDirHist.size()/2; i++){
+    for (int i = 0; i < invertedDirHist.size()/2; i++)
+    {
         invertedDirHist[invertedDirHist.size()-1-i] = dirHist[i];
         invertedDirHist[i] = dirHist[dirHist.size()-1-i];
     }
 
     bool topoSame = false;
-    if(w) {
+    if(w) 
+    {
         topoSame = bettiNumbers[0] == other.bettiNumbers[0];
         topoSame = topoSame && bettiNumbers[1] == other.bettiNumbers[1];
         topoSame = topoSame && bettiNumbers[2] == other.bettiNumbers[2];
