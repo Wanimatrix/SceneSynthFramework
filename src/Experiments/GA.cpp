@@ -3,14 +3,16 @@
 #include <random>
 #include <algorithm>
 
-double GA::randomDouble(double min, double max) {
+double GA::randomDouble(double min, double max) 
+{
     std::random_device m_rseed;
     std::mt19937 rgen(m_rseed());
     std::uniform_real_distribution<double> ddist(min,max);
     return ddist(rgen);
 }
 
-std::vector<double> GA::randomDoubleVector(int amount, double min, double max) {
+std::vector<double> GA::randomDoubleVector(int amount, double min, double max) 
+{
     std::random_device m_rseed;
     std::vector<double> result;
     result.reserve(amount);
@@ -22,14 +24,16 @@ std::vector<double> GA::randomDoubleVector(int amount, double min, double max) {
     return result;
 }
 
-int GA::randomInt(int min, int max) {
+int GA::randomInt(int min, int max) 
+{
     std::random_device m_rseed;
     std::mt19937 rgen(m_rseed());
     std::uniform_int_distribution<int> ddist(min,max);
     return ddist(rgen);
 }
 
-std::vector<int> GA::randomIntVector(int amount, int min, int max) {
+std::vector<int> GA::randomIntVector(int amount, int min, int max) 
+{
     std::random_device m_rseed;
     std::vector<int> result;
     result.reserve(amount);
@@ -41,7 +45,8 @@ std::vector<int> GA::randomIntVector(int amount, int min, int max) {
     return result;
 }
 
-void GA::createPopulation(int count, Individual min, Individual max) {
+void GA::createPopulation(int count, Individual min, Individual max) 
+{
     m_population.reserve(count);
     m_fitnessCache.reserve(count);
     while(m_population.size() < count) {
@@ -60,7 +65,8 @@ void GA::createPopulation(int count, Individual min, Individual max) {
     m_population.shrink_to_fit();
 }
 
-std::pair<double,std::shared_ptr<IBS>> GA::fitness(int indIndex) {
+std::pair<double,std::shared_ptr<IBS>> GA::fitness(int indIndex) 
+{
     // TODO: When accessing for the second time during a generation get it from the saved vector
     if(m_fitnessCache[indIndex].first == m_generation)
     {
@@ -77,7 +83,8 @@ std::pair<double,std::shared_ptr<IBS>> GA::fitness(int indIndex) {
     return result;
 }
 
-double GA::grade() {
+double GA::grade() 
+{
     DebugLogger::ss << "Grading started ...";
     DebugLogger::log();
     std::vector<std::shared_ptr<Object>> ibsObjs;
@@ -108,7 +115,8 @@ double GA::grade() {
     return popFitness / m_population.size();
 }
 
-std::vector<Individual> GA::evolve() {
+std::vector<Individual> GA::evolve() 
+{
     // Sort individuals on fitness
     std::vector<std::pair<double,Individual>> fitnessPairs;
     for(int i = 0; i < m_population.size(); i++) {
@@ -176,22 +184,12 @@ std::vector<Individual> GA::evolve() {
     while(children.size() < childrenSize) {
         std::vector<int> maleFemale = GA::randomIntVector(2,0,parentsSize-1);
         if(maleFemale[0] != maleFemale[1]) {
-            DebugLogger::ss << "Different parents" << std::endl;
-            DebugLogger::ss << "Parent 1: " << "(" << parents[maleFemale[0]].vals[0] << 
-                                               "," << parents[maleFemale[0]].vals[1] <<
-                                               "," << parents[maleFemale[0]].vals[2] << "); name = " << parents[maleFemale[0]].name << std::endl;
-            DebugLogger::ss << "Parent 2: " << "(" << parents[maleFemale[1]].vals[0] << 
-                                               "," << parents[maleFemale[1]].vals[1] <<
-                                               "," << parents[maleFemale[1]].vals[2] << "); name = " << parents[maleFemale[1]].name << std::endl;
-            DebugLogger::log();
             Individual male = parents[maleFemale[0]];
             Individual female = parents[maleFemale[1]];
             int half = (sizeof(male.vals) / sizeof(male.vals[0])) / 2;
-            DebugLogger::ss << "Child being calculated ...";
-            DebugLogger::log();
             Individual child;
             auto childIt = std::copy(std::begin(male.vals),std::begin(male.vals)+half,std::begin(child.vals));
-            std::copy(std::begin(female.vals)+half,std::end(female.vals)+half,childIt);
+            std::copy(std::begin(female.vals)+half,std::end(female.vals),childIt);
             std::ostringstream oss;
             oss << "Chair_" << parents.size()+children.size();
             child.name = oss.str();
@@ -206,7 +204,8 @@ std::vector<Individual> GA::evolve() {
     return parents;
 }
 
-double GA::run() {
+double GA::run() 
+{
     DebugLogger::ss << "Starting genetic algorithm.";
     DebugLogger::log();
     createPopulation(m_options.populationSize, m_options.minMaxIndividual.first, m_options.minMaxIndividual.second);

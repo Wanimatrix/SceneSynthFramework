@@ -84,16 +84,20 @@ std::pair<double,std::shared_ptr<IBS>> IBSFitEval::eval(Individual &i)
         DebugLogger::log();
         // Calculate similarity
         double similarityDiff = std::abs(m_ibses[0]->getSimilarity(*ibses[0]));
+        DebugLogger::ss << "SimilarityDifference 0: " << similarityDiff << std::endl;
+        DebugLogger::log();
         for(int i = 1; i < m_ibses.size(); i++) 
         {
             double tmpSimilarityDiff = std::abs(m_ibses[i]->getSimilarity(*ibses[0]));
+            DebugLogger::ss << "SimilarityDifference " << i << ": " << tmpSimilarityDiff << std::endl;
+            DebugLogger::log();
             if (tmpSimilarityDiff < similarityDiff)
             {
                 similarityDiff = tmpSimilarityDiff;
             }
         }
         //similarity /= m_ibses.size();
-        DebugLogger::ss << "Similarity calculated... THIS";
+        DebugLogger::ss << "Similarity calculated...";
         DebugLogger::log();
 
         std::ostringstream oss;
