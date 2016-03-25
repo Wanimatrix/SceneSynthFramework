@@ -14,6 +14,7 @@ public:
 
     virtual double run();
 private:
+    virtual bool validateNewIndividual(Individual newIndividual);
     virtual std::pair<double,std::shared_ptr<IBS>> fitness(int indIndex);
     virtual double grade();
     virtual void createPopulation(int count, Individual min, Individual max);

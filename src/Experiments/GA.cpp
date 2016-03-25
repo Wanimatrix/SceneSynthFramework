@@ -45,6 +45,11 @@ std::vector<int> GA::randomIntVector(int amount, int min, int max)
     return result;
 }
 
+bool GA::validateNewIndividual(Individual newIndividual)
+{
+    return m_fitEval.validate(newIndividual);
+}
+
 void GA::createPopulation(int count, Individual min, Individual max) 
 {
     m_population.reserve(count);
@@ -53,9 +58,12 @@ void GA::createPopulation(int count, Individual min, Individual max)
         DebugLogger::ss << "Population: " << m_population.size() << "/" << count;
         DebugLogger::log();
         Individual ind;
-        for(int i = 0; i < sizeof(ind.vals)/sizeof(ind.vals[0]); i++) {
-            ind.vals[i] = GA::randomDouble(min.vals[i], max.vals[i]);
-        }
+        do
+        {
+            for(int i = 0; i < sizeof(ind.vals)/sizeof(ind.vals[0]); i++) {
+                ind.vals[i] = GA::randomDouble(min.vals[i], max.vals[i]);
+            }
+        } while (!validateNewIndividual(ind));
         std::ostringstream oss;
         oss << "Chair_" << m_population.size();
         ind.name = oss.str();

@@ -286,6 +286,7 @@ void Object::applyTransformation(Eigen::Matrix4d t_transformation)
         vn = Vector3d(vnEig[0],vnEig[1],vnEig[2]);
         vertexNormals[v] = vn;
     }
+    initBbox();
 }
 
 /****************************

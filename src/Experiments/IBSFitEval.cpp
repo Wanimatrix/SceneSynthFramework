@@ -19,6 +19,23 @@ std::shared_ptr<Object> IBSFitEval::setupScene(Individual i)
     return result;
 }
 
+bool IBSFitEval::validate(Individual i)
+{
+    bool result = true;
+    std::shared_ptr<Object> indObj(new Object(i.name,m_mesh));
+    indObj->setPosition(i.vals[0],i.vals[1],i.vals[2]);
+    std::vector<std::shared_ptr<Object>> sceneObjs = m_scene.getObjects();
+    for(std::shared_ptr<Object> obj : sceneObjs)
+    {
+        if(indObj->intersects(obj))
+        {
+            result = false;
+            break;
+        }
+    }
+    return result;
+}
+
 void IBSFitEval::displayIndividualsInScene(std::vector<Individual> individuals, std::string path, std::vector<std::shared_ptr<Object>> extraObjects)
 {
     std::vector<std::shared_ptr<Object>> tmpObjects;

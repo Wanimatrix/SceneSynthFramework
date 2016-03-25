@@ -324,13 +324,14 @@ std::vector<Point3d> IbsGenerator::getInputForVoronoi()
         std::shared_ptr<Object> otherObj = (i==0 ? objects[1] : objects[0]);
         DebugLogger::ss << "Fetching samples on " << obj->getName() << " with distanceWeights towards " << otherObj->getName();
         DebugLogger::log();
-        for (auto sample : obj->getActiveSamples(i==0 ? objects[1] : objects[0]))
+        for (auto sample : obj->getActiveSamples(otherObj))
         {
             points.push_back(sample.pos);
             sampleObjIdx.push_back(i);            // index the corresponding object index
             sampleLocalIdx.push_back(idx++);    // index in each object
         }
     }
+
 
     // 2. add sample points on the bounding ball
     // Bbox3d bbox = objects[0]->getBbox();
@@ -686,10 +687,27 @@ int IbsGenerator::findRidgesAroundVertex(vertexT *atvertex)
                 int obj_id_1 = sampleObjIdx[qh_pointid(qhull->qh(),atvertex->point)];
                 int obj_id_2 = sampleObjIdx[qh_pointid(qhull->qh(),vertex->point)];
                 // TODO: Use this output to fix the ibses.size() == 1 assert
-                //DebugLogger::ss << "IF checks: " << (vertex->visitid != qhull->qh()->vertex_visit);
-                //DebugLogger::ss << ", " << !vertex->seen;
-                //DebugLogger::ss << ", " << ( obj_id_1 != -1 && obj_id_2 != -1 && ( obj_id_1 != obj_id_2 ) );
-                //DebugLogger::log();
+                /* if(( obj_id_1 != -1 && obj_id_2 != -1 && ( obj_id_1 != obj_id_2 ) )) */
+                /* { */
+                /*     DebugLogger::ss << "Third IF check was TRUE"; */
+                /*     DebugLogger::log(); */
+                /* } else if(obj_id_1 != -1) */
+                /* { */
+                /*     DebugLogger::ss << "Third IF check was FALSE" << std::endl; */
+                /*     DebugLogger::ss << "OBJ idxes: " << obj_id_1 << "," << obj_id_2 << std::endl; */
+                /*     DebugLogger::ss << "Atvertex pointid: " << qh_pointid(qhull->qh(),atvertex->point) << std::endl; */
+                /*     DebugLogger::log(); */
+                /* } */
+                /* if(!(vertex->visitid != qhull->qh()->vertex_visit)) */
+                /*     DebugLogger::ss << "IF failed on first check"; */
+                /* else if(!(!vertex->seen)) */
+                /*     DebugLogger::ss << "IF failed on second check"; */
+                /* else if(!(( obj_id_1 != -1 && obj_id_2 != -1 && ( obj_id_1 != obj_id_2 ) ))) */
+                /*     DebugLogger::ss << "IF failed on third check"; */
+                /* DebugLogger::ss << "IF checks: " << (vertex->visitid != qhull->qh()->vertex_visit); */
+                /* DebugLogger::ss << ", " << !vertex->seen; */
+                /* DebugLogger::ss << ", " << ( obj_id_1 != -1 && obj_id_2 != -1 && ( obj_id_1 != obj_id_2 ) ); */
+                /* DebugLogger::log(); */
                 if (vertex->visitid != qhull->qh()->vertex_visit // To make sure we don't visit a cell twice when it shares multiple vertices with this cell
                   && !vertex->seen // Only check ridges that were not visited before (its vertex is already seen)
                   && ( obj_id_1 != -1 && obj_id_2 != -1 && ( obj_id_1 != obj_id_2 ) )) { 

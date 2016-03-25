@@ -40,7 +40,7 @@ std::vector<std::shared_ptr<IBS>> ExpGAIBS::compute(std::pair<std::vector<std::s
     IBSFitEval ibsFitEval(ibses, newScene, sets.first[0]->getMesh());
     GAOptions options;
     options.logFitness = true;
-    options.populationSize = 10;
+    options.populationSize = 30;
     options.outputPath = EXP_PATH+"/"+getExpPath()+"/";
     std::vector<Object> sceneObjects;
     DebugLogger::ss << "Scene objects: " << newScene.getObjects().size() << std::endl;

@@ -11,7 +11,7 @@ include_directories(/usr/local/include)
 link_directories ( /usr/local/lib )
 
 # set compiler and linker flags
-set (COMPILER_FLAGS "-std=c++11 -m64 -U__STRICT_ANSI__ -fopenmp -O2")
+set (COMPILER_FLAGS "-std=c++11 -m64 -U__STRICT_ANSI__ -fopenmp -O2 -Wno-deprecated")
 set (LINK_FLAGS "-fopenmp")
 
 if (PROFILING)
@@ -60,7 +60,8 @@ set ( LIB_DIR ${CMAKE_SOURCE_DIR}/../libs)
     include_directories ( ${LIB_DIR}/libigl/include )
 
     ## Qhull
-    set ( QHULL_DIR /usr/local)
+    #set ( QHULL_DIR /usr/local)
+    set ( QHULL_DIR ${LIB_DIR}/qhull )
     include_directories ( ${QHULL_DIR}/include/libqhullcpp )
     include_directories ( ${QHULL_DIR}/include/libqhull_r )
     link_directories( ${QHULL_DIR}/lib )
@@ -74,7 +75,8 @@ set ( LIB_DIR ${CMAKE_SOURCE_DIR}/../libs)
 
     ## CGAL
     #set ( CGAL_DIR ${LIB_DIR}/CGAL-4.7)
-    set ( CGAL_DIR /usr/local)
+    #set ( CGAL_DIR /usr/local)
+    set ( CGAL_DIR ${LIB_DIR}/CGAL )
     link_directories ( ${CGAL_DIR}/lib )
     if (CYGWIN)
         list ( APPEND LIBRARY_LINKS_LST CGAL.dll CGAL_Core.dll)
