@@ -18,11 +18,16 @@ private:
     virtual std::pair<double,std::shared_ptr<IBS>> fitness(int indIndex);
     virtual double grade();
     virtual void createPopulation(int count, Individual min, Individual max);
+    virtual int tournamentSelection();
     virtual std::vector<Individual> evolve();
-    static double randomDouble(double min, double max);
-    static std::vector<double> randomDoubleVector(int amount, double min, double max);
-    static int randomInt(int min, int max);
-    static std::vector<int> randomIntVector(int amount, int min, int max);
+    virtual Individual mutate(Individual ind);
+    virtual Individual crossover(Individual male, Individual female);
+    virtual Individual spatialCrossover(Individual male, Individual female);
+    static double uniformDouble(double min, double max);
+    static double normalDouble(double mean, double variance);
+    static std::vector<double> uniformDoubleVector(int amount, double min, double max);
+    static int uniformInt(int min, int max);
+    static std::vector<int> uniformIntVector(int amount, int min, int max);
 
     GAOptions m_options;
     std::vector<Individual> m_population;

@@ -895,6 +895,7 @@ CMakeFiles/sceneSynth.dir/src/Display/Display.cpp.o
  /home/wouter/Documents/KUL/Doctoraat/Implementation/SceneSynthFramework/src/Mesh.h
  /home/wouter/Documents/KUL/Doctoraat/Implementation/SceneSynthFramework/src/Object.h
  /home/wouter/Documents/KUL/Doctoraat/Implementation/SceneSynthFramework/src/Utilities/Transformation.h
+ /home/wouter/Documents/KUL/Doctoraat/Implementation/SceneSynthFramework/src/Utilities/Utilities.h
  /home/wouter/Documents/KUL/Doctoraat/Implementation/SceneSynthFramework/src/types.h
 CMakeFiles/sceneSynth.dir/src/Display/writeOBJ.cpp.o
  ../../libs/eigen/Eigen/Cholesky
@@ -2061,6 +2062,7 @@ CMakeFiles/sceneSynth.dir/src/Experiments/Experiment.cpp.o
  /home/wouter/Documents/KUL/Doctoraat/Implementation/SceneSynthFramework/src/Object.h
  /home/wouter/Documents/KUL/Doctoraat/Implementation/SceneSynthFramework/src/Scene.h
  /home/wouter/Documents/KUL/Doctoraat/Implementation/SceneSynthFramework/src/Utilities/Transformation.h
+ /home/wouter/Documents/KUL/Doctoraat/Implementation/SceneSynthFramework/src/Utilities/Utilities.h
  /home/wouter/Documents/KUL/Doctoraat/Implementation/SceneSynthFramework/src/types.h
 CMakeFiles/sceneSynth.dir/src/Experiments/Experiments.cpp.o
  ../../libs/eigen/Eigen/Cholesky

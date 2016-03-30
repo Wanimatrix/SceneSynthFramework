@@ -91,6 +91,9 @@ public:
     virtual void translate(double x, double y, double z);
     virtual void setPosition(double x, double y, double z);
     virtual void clearTransformationStack();
+
+    // SETTERS
+    virtual void setName(std::string newName) {m_name = newName;}
 private:
     // INIT
     virtual Mesh init(const aiMesh *t_mesh, std::stack<Transformation> transformationStack, const std::string &t_name);

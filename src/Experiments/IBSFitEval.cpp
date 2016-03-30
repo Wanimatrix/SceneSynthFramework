@@ -60,7 +60,7 @@ void IBSFitEval::displayIndividualsInScene(std::vector<Individual> individuals, 
 
 std::pair<double,std::shared_ptr<IBS>> IBSFitEval::eval(Individual &i)
 {
-    assert(m_scene.getObjects().size() == 1); // TODO: Solve this.
+    assert(m_scene.getObjects().size() == 1); 
     std::shared_ptr<Object> table = m_scene.getObjects()[0];
 
     DebugLogger::ss << "Current Individual: " << i.vals[0] << ", " << i.vals[1] << ", " << i.vals[2];
@@ -113,13 +113,16 @@ std::pair<double,std::shared_ptr<IBS>> IBSFitEval::eval(Individual &i)
                 similarity = tmpSimilarity;
             }
         }
+        std::ostringstream oss;
+        oss << ibses[0]->ibsObj->getName() << "_" << similarity;
+        ibses[0]->ibsObj->setName(oss.str());
         //similarity /= m_ibses.size();
         DebugLogger::ss << "Similarity calculated...";
         DebugLogger::log();
 
-        std::ostringstream oss;
-        oss << i.name << "_" << similarity;
-        i.name = oss.str();        
+        /* std::ostringstream oss; */
+        /* oss << i.name << "_" << similarity; */
+        /* i.name = oss.str(); */
 
         // Clean up the scene.
         sceneCleanup(chair);

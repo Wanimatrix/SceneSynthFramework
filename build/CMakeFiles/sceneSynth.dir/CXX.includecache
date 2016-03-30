@@ -1575,6 +1575,8 @@ writeOBJ.h
 /home/wouter/Documents/KUL/Doctoraat/Implementation/SceneSynthFramework/src/Display/writeOBJ.h
 ../Debug/DebugTools.h
 /home/wouter/Documents/KUL/Doctoraat/Implementation/SceneSynthFramework/src/Debug/DebugTools.h
+../Utilities/Utilities.h
+/home/wouter/Documents/KUL/Doctoraat/Implementation/SceneSynthFramework/src/Utilities/Utilities.h
 
 /home/wouter/Documents/KUL/Doctoraat/Implementation/SceneSynthFramework/src/Display/Display.h
 ../Object.h
@@ -1673,12 +1675,10 @@ ExpIBSSim.h
 /home/wouter/Documents/KUL/Doctoraat/Implementation/SceneSynthFramework/src/Experiments/Experiment.cpp
 Experiment.h
 /home/wouter/Documents/KUL/Doctoraat/Implementation/SceneSynthFramework/src/Experiments/Experiment.h
+../Utilities/Utilities.h
+/home/wouter/Documents/KUL/Doctoraat/Implementation/SceneSynthFramework/src/Utilities/Utilities.h
 ../Debug/DebugTools.h
 /home/wouter/Documents/KUL/Doctoraat/Implementation/SceneSynthFramework/src/Debug/DebugTools.h
-boost/algorithm/string.hpp
--
-boost/filesystem.hpp
--
 
 /home/wouter/Documents/KUL/Doctoraat/Implementation/SceneSynthFramework/src/Experiments/Experiment.h
 memory
@@ -1931,10 +1931,16 @@ string
 /home/wouter/Documents/KUL/Doctoraat/Implementation/SceneSynthFramework/src/Utilities/Utilities.cpp
 Utilities.h
 /home/wouter/Documents/KUL/Doctoraat/Implementation/SceneSynthFramework/src/Utilities/Utilities.h
+boost/algorithm/string.hpp
+-
+boost/filesystem.hpp
+-
 cmath
 -
 
 /home/wouter/Documents/KUL/Doctoraat/Implementation/SceneSynthFramework/src/Utilities/Utilities.h
+string
+-
 
 /home/wouter/Documents/KUL/Doctoraat/Implementation/SceneSynthFramework/src/Utilities/split_range.hpp
 omp.h

@@ -25,7 +25,6 @@ public:
     virtual std::vector<std::shared_ptr<IBS>> compute(std::pair<std::vector<std::shared_ptr<Object>>,std::vector<std::shared_ptr<Object>>> sets) = 0;
     virtual void output(std::vector<std::shared_ptr<IBS>> ibses, std::string path) = 0;
     virtual std::string getExpPath() = 0;
-    virtual void checkPath(std::string path) final;
 protected:
     std::string outputPath;
 };

@@ -35,6 +35,7 @@ public:
     void computeSampleWeightForTri();
 
     void plotFeatures(const std::string &savePath = std::string(""));
+    /* double getSimilarity(const IBS &other, bool w = true, double a = 0.1, double b = 0.4, double c = 0.5); */
     double getSimilarity(const IBS &other, bool w = true, double a = 0.1, double b = 0.4, double c = 0.5);
 
 private:

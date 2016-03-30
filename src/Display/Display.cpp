@@ -4,6 +4,7 @@
 #include <string>
 #include "writeOBJ.h"
 #include "../Debug/DebugTools.h"
+#include "../Utilities/Utilities.h"
 
 #ifdef __CYGWIN__
 #define EXPAND_PATH(path) "$(cygpath.exe -aw "+(path)+")"
@@ -13,6 +14,9 @@
 
 void Display::display(const std::vector<std::shared_ptr<Object>> &objects, const std::string &save, bool display) {
     std::cout << "Start displaying ..." << std::endl;
+
+    utilities::checkPath(std::string(TMP_PATH));
+    utilities::checkPath(std::string(TMP_PATH)+OBJ_PATH);
 
     // Write all objects to obj and write their path in scene file
     std::ofstream file(std::string(TMP_PATH)+SCENE_PATH, std::ofstream::trunc);

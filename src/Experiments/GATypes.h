@@ -13,6 +13,7 @@ typedef struct Individual {
     /* int chromosome[NB_GENES * GENE_LENGTH]; */
     double vals[3];
     std::string name;
+    double similarity;
 
     /* int binToInt(int *bin, int bits, bool sign) */
     /* { */
@@ -89,6 +90,9 @@ typedef struct GAOptions {
   std::pair<Individual,Individual> minMaxIndividual;
   double retain = 0.2;
   double random_select = 0.05;
-  double mutate = 0.01;
+  double mutate = 0.015;
+  int tournamentSize = 5;
+  double crossover = 0.5;
+  double crossoverRadius = 0.1;
   std::string outputPath;
 } GAOptions;
