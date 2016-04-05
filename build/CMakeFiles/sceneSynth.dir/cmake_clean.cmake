@@ -20,6 +20,7 @@ file(REMOVE_RECURSE
   "CMakeFiles/sceneSynth.dir/src/Scene.cpp.o"
   "CMakeFiles/sceneSynth.dir/src/Debug/Timer.cpp.o"
   "CMakeFiles/sceneSynth.dir/src/Debug/DebugTools.cpp.o"
+  "CMakeFiles/sceneSynth.dir/src/Experiments/ExpIBSPDF.cpp.o"
   "CMakeFiles/sceneSynth.dir/src/Experiments/IBSFitEval.cpp.o"
   "CMakeFiles/sceneSynth.dir/src/Experiments/Experiments.cpp.o"
   "CMakeFiles/sceneSynth.dir/src/Experiments/ExpIBSSim.cpp.o"

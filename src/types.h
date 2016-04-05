@@ -1,5 +1,7 @@
 #pragma once
 
+//#define CGAL_DISABLE_ROUNDING_MATH_CHECK
+
 #include <CGAL/Simple_cartesian.h>
 #include <CGAL/Surface_mesh.h>
 #include <CGAL/Exact_predicates_exact_constructions_kernel.h>

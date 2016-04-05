@@ -292,7 +292,25 @@ std::vector<Individual> GA::evolve()
     /* return parents; */
     
     std::vector<Individual> newPopulation;
-    for(int i = 0; i < m_population.size(); i++)
+
+    if (m_options.elitism > 0 && m_options.elitism < m_population.size())
+    {
+        // Sort individuals on fitness
+        std::vector<std::pair<double,Individual>> fitnessPairs;
+        for(int i = 0; i < m_population.size(); i++) {
+            fitnessPairs.push_back(std::make_pair(fitness(i).first,m_population[i]));
+        }
+        std::sort(fitnessPairs.begin(), fitnessPairs.end(), [](std::pair<double,Individual> a,std::pair<double,Individual> b) {
+            return a.first > b.first;
+        });
+
+        for(int i = 0; i < m_options.elitism; i++)
+        {
+            newPopulation.push_back(fitnessPairs[i].second);
+        }
+    }
+
+    for(int i = m_options.elitism; i < m_population.size(); i++)
     {
         Individual child;
         do
@@ -307,7 +325,7 @@ std::vector<Individual> GA::evolve()
         newPopulation.push_back(child);
     }
 
-    for(int i = 0; i < m_population.size(); i++)
+    for(int i = m_options.elitism; i < m_population.size(); i++)
     {
         Individual tmpIndividual;
         do

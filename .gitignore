@@ -49,3 +49,5 @@ Thumbs.db
 */Makefile
 */dna.txt
 
+build/CMakeFiles*
+build/CMakeCache*

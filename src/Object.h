@@ -62,6 +62,11 @@ public:
     virtual double getNonUniformSampleDensity(std::shared_ptr<Object> objPtr) const {return m_nonUniformSampleDensity.at(objPtr);}
     virtual std::vector<SamplePoint> getUniformSamples() const {return m_uniformSamples;}
     virtual std::vector<SamplePoint> getNonUniformSamples(std::shared_ptr<Object> objPtr) const {return m_nonUniformSamples.at(objPtr);}
+    virtual void removeNonUniformSample(std::shared_ptr<Object> objPtr) 
+    {
+        m_nonUniformSamples.erase(objPtr);
+        m_nonUniformSampleDensity.erase(objPtr);
+    }
     virtual std::vector<SamplePoint> getActiveSamples(std::shared_ptr<Object> objPtr) const 
     {
       

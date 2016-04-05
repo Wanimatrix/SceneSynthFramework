@@ -37,6 +37,10 @@ public:
     virtual void removeObject(std::shared_ptr<Object> object) 
     {
         m_objects.erase(std::remove(m_objects.begin(), m_objects.end(), object), m_objects.end());
+        for(std::shared_ptr<Object> obj : m_objects)
+        {
+            obj->removeNonUniformSample(object);
+        }
     }
 
     // SAMPLING

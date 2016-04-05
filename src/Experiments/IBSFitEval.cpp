@@ -79,8 +79,11 @@ std::pair<double,std::shared_ptr<IBS>> IBSFitEval::eval(Individual &i)
         m_scene.samplePoints();
 
         // Generate IBS between other object and this.
-        table->sampleNonUniform(table->getUniformSamples().size(),chair);
-        chair->sampleNonUniform(chair->getUniformSamples().size(),table);
+        if(m_sampleScheme == IbsSampleScheme::SampleScheme::IMPORTANCE_DISTANCE) 
+        {
+            table->sampleNonUniform(table->getUniformSamples().size(),chair);
+            chair->sampleNonUniform(chair->getUniformSamples().size(),table);
+        }
         IbsGenerator ibsGen;
         std::vector<std::shared_ptr<IBS>> ibses = ibsGen.computeIBS(std::vector<std::shared_ptr<Object>>({chair,table}));
         DebugLogger::ss << "Were they intersecting? " << chair->intersects(table) << std::endl;

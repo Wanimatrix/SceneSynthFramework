@@ -3,12 +3,13 @@
 #include "../AnalysisPhase/IBS.h"
 #include "../Scene.h"
 #include "../Mesh.h"
+#include "ExpIBSSim.h"
 
 class IBSFitEval 
 {
 public:
-    IBSFitEval(std::vector<std::shared_ptr<IBS>> ibses, Scene currentScene, Mesh m) 
-        : m_ibses(ibses), m_scene(currentScene), m_mesh(m) {};
+    IBSFitEval(std::vector<std::shared_ptr<IBS>> ibses, Scene currentScene, Mesh m, IbsSampleScheme::SampleScheme sampleScheme) 
+        : m_ibses(ibses), m_scene(currentScene), m_mesh(m), m_sampleScheme(sampleScheme) {};
     virtual ~IBSFitEval() {};
 
     virtual std::pair<double,std::shared_ptr<IBS>> eval(Individual &i);
@@ -21,4 +22,5 @@ private:
     std::vector<std::shared_ptr<IBS>> m_ibses;
     Scene m_scene;
     Mesh m_mesh;
+    IbsSampleScheme::SampleScheme m_sampleScheme;
 };

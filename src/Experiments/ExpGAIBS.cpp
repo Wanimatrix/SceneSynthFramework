@@ -37,10 +37,10 @@ std::vector<std::shared_ptr<IBS>> ExpGAIBS::compute(std::pair<std::vector<std::s
     std::shared_ptr<Object> tableObj(new Object("Table", sets.second[0]->getMesh()));
     newScene.addObject(tableObj);
     //Display::display(newScene.getObjects(),EXP_PATH+"/"+getExpPath()+"/"+std::string("newScene.blend"),false);
-    IBSFitEval ibsFitEval(ibses, newScene, sets.first[0]->getMesh());
+    IBSFitEval ibsFitEval(ibses, newScene, sets.first[0]->getMesh(), m_sampleScheme);
     GAOptions options;
     options.logFitness = true;
-    options.populationSize = 30;
+    options.populationSize = 20;
     options.outputPath = EXP_PATH+"/"+getExpPath()+"/";
     std::vector<Object> sceneObjects;
     DebugLogger::ss << "Scene objects: " << newScene.getObjects().size() << std::endl;

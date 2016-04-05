@@ -94,5 +94,6 @@ typedef struct GAOptions {
   int tournamentSize = 5;
   double crossover = 0.5;
   double crossoverRadius = 0.1;
+  int elitism = 0;
   std::string outputPath;
 } GAOptions;

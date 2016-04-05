@@ -2,6 +2,7 @@
 
 #include <vector>
 #include <string>
+#include <iomanip>
 #include <memory>
 #include <assert.h>
 #include <cstdlib>
@@ -15,6 +16,7 @@
 #include "Experiment.h"
 #include "ExpIBSSim.h"
 #include "ExpGAIBS.h"
+#include "ExpIBSPDF.h"
 #include "ExpIDIBS.h"
 #include <boost/algorithm/string.hpp>
 
@@ -86,6 +88,7 @@ typedef struct ParsedInfo {
     std::vector<std::string> inputScenes;
     std::string expId = "";
     bool onePass = false;
+    int executionAmount = 1;
 } ParsedInfo;
 
 ParsedInfo parse(int argc, const char* argv[]) {
@@ -99,6 +102,9 @@ ParsedInfo parse(int argc, const char* argv[]) {
             pi.sampleScheme = IbsSampleScheme::getSampleScheme(uppercSampleName);
             DebugLogger::ss << "Chosen sampleScheme: " << IbsSampleScheme::getSampleSchemeName(pi.sampleScheme);
             DebugLogger::log();
+        } else if (flag == "-n")
+        {
+            pi.executionAmount = atoi(argv[++i]);
         } else if(flag == "--centralObj") {
             pi.centralObj = argv[++i];
         } else if (flag == "--onePass") {
@@ -128,7 +134,28 @@ std::shared_ptr<Input> loadScenes(std::vector<std::string> scenes) {
     return input;
 }
 
+std::string getTimestamp ()
+{
+    time_t ltime;
+    struct tm *Tm;
+
+    ltime = time(NULL);
+    Tm = localtime(&ltime);
+
+    std::ostringstream timestamp;
+    timestamp << std::setfill('0') << std::setw(2) << Tm->tm_mday;
+    timestamp << std::setfill('0') << std::setw(2) << (Tm->tm_mon+1);
+    timestamp << std::setfill('0') << std::setw(2) << (Tm->tm_year%100);
+    timestamp << "_";
+    timestamp << std::setfill('0') << std::setw(2) << Tm->tm_hour;
+    timestamp << std::setfill('0') << std::setw(2) << Tm->tm_min;
+    return timestamp.str();
+}
+
 int main(int argc, const char* argv[]) {
+#ifdef CGAL_DISABLE_ROUNDING_MATH_CHECK
+    std::cout << "DISABLE_ROUNDING_MATH_CHECK DEFINED" << std::endl;
+#endif
     std::shared_ptr<Input> input;
     std::vector<std::string> scenePaths;
 
@@ -140,18 +167,31 @@ int main(int argc, const char* argv[]) {
     input = loadScenes(pi.inputScenes);
     DebugLogger::ss << "Scenes loaded";
     DebugLogger::log();
+    
+    std::string timestamp = getTimestamp();
 
-    //Experiment *IBSSimilarityExperiments = new ExpIBSSim(pi.sampleScheme,pi.onePass,pi.expId);
-    //IBSSimilarityExperiments->run(input,pi.centralObj);
-    //delete IBSSimilarityExperiments;
-    Experiment *gaExperiment = new ExpGAIBS(pi.sampleScheme,pi.onePass,pi.expId);
-    gaExperiment->run(input,pi.centralObj);
-    delete gaExperiment;
+    DebugLogger::ss << "Times executing: " << pi.executionAmount;
+    DebugLogger::log();
+
+    for (int i = 0; i < pi.executionAmount; i++)
+    {
+        std::ostringstream oss;
+        oss << pi.expId << "/" << timestamp << "/" << i;
+        /* Experiment *IBSSimilarityExperiments = new ExpIBSSim(pi.sampleScheme,pi.onePass,oss.str()); */
+        /* IBSSimilarityExperiments->run(input,pi.centralObj); */
+        /* delete IBSSimilarityExperiments; */
+        /* Experiment *IBSSimPDFExperiment = new ExpIBSPDF(pi.sampleScheme,pi.onePass,pi.expId); */
+        /* IBSSimPDFExperiment->run(input,pi.centralObj); */
+        /* delete IBSSimPDFExperiment; */
+        Experiment *gaExperiment = new ExpGAIBS(pi.sampleScheme,pi.onePass,oss.str());
+        gaExperiment->run(input,pi.centralObj);
+        delete gaExperiment;
     //for (int i = 0; i < 10; i++)
     //{
         //Experiment *idExperiment = new ExpIDIBS(pi.sampleScheme,pi.onePass,pi.expId);
         //idExperiment->run(input,pi.centralObj);
         //delete idExperiment;
     //}
+    }
 }
 #endif

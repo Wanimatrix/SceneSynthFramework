@@ -440,18 +440,18 @@ void Object::sampleNonUniform(int num, std::shared_ptr<Object> other, bool conve
     DebugLogger::ss << "Sampling done.";
     DebugLogger::log();
 
-  if(getName() == "Plane") 
-  {
-      Mesh3d::Face_range::iterator fe, fit, ftmp;
-      DebugLogger::ss << "New PlaneWeights : ";
-      for(boost::tie(fit,fe) = m_mesh.mesh3d->faces(); fit != fe; fit++) {
-        ftmp = fit;
-        DebugLogger::ss << fweight[*fit] << (++ftmp != fe ? ", " : "");
-      }
-      DebugLogger::log();
-  }
+    if(getName() == "Plane") 
+    {
+        Mesh3d::Face_range::iterator fe, fit, ftmp;
+        DebugLogger::ss << "New PlaneWeights : ";
+        for(boost::tie(fit,fe) = m_mesh.mesh3d->faces(); fit != fe; fit++) {
+            ftmp = fit;
+            DebugLogger::ss << fweight[*fit] << (++ftmp != fe ? ", " : "");
+        }
+        DebugLogger::log();
+    }
 
-  t.start();
+    t.start();
     Sampler s(m_mesh, RANDOM_BARYCENTRIC_WEIGHTED);
     m_nonUniformSamples[other] = s.getSamples(num, 0);
     t.stop("Actual sampling");
