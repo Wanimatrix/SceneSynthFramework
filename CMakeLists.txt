@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.3.0)
+cmake_minimum_required(VERSION 3.2.2)
 project (sceneSynth)
 
 #includes
@@ -11,7 +11,7 @@ include_directories(/usr/local/include)
 link_directories ( /usr/local/lib )
 
 # set compiler and linker flags
-set (COMPILER_FLAGS "-std=c++11 -m64 -U__STRICT_ANSI__ -fopenmp -O2 -Wno-deprecated")
+set (COMPILER_FLAGS "-std=gnu++11 -m64 -U__STRICT_ANSI__ -fopenmp -O2 -Wno-deprecated ")
 set (LINK_FLAGS "-fopenmp")
 
 if (PROFILING)
@@ -42,7 +42,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ../bin)
 set ( LIB_DIR ${CMAKE_SOURCE_DIR}/../libs)
 
     ## Assimp
-    set ( ASSIMP_DIR ${LIB_DIR}/assimp_3.2)
+    set ( ASSIMP_DIR ${LIB_DIR}/assimp)
     include_directories ( ${ASSIMP_DIR}/include )
     link_directories( ${ASSIMP_DIR}/lib )
     if (CYGWIN)

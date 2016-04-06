@@ -13,7 +13,7 @@
 #define DATA_PATH "../../Data/"
 #endif
 
-#define EXP_PATH std::string(DATA_PATH)+std::string("Experiments/")
+#define EXP_PATH std::string(DATA_PATH)+std::string("Experiments")
 
 class Experiment {
 public:
