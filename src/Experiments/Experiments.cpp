@@ -27,7 +27,7 @@
 #endif
 
 #define SCENE_FOLDER_PATH std::string(DATA_PATH)+std::string("SceneDB/")
-#define EXP_PATH std::string(DATA_PATH)+std::string("Experiments/")
+#define EXP_PATH std::string(DATA_PATH)+std::string("Experiments")
 
 #define EXPFUNC(nr) (exp ## nr)
 //#define str(x) #x

@@ -73,6 +73,9 @@ double IBS::getSimilarity(const IBS &other, bool w, double a, double b, double c
     assert(dirHist.size() == 10);
     assert(distHist.size() == 10);
 
+    DebugLogger::ss << "++  SIMILARITY  ++";
+    DebugLogger::log();
+
     std::vector<double> invertedDirHist(dirHist.size());
     
     for (int i = 0; i < invertedDirHist.size()/2; i++)
@@ -87,6 +90,13 @@ double IBS::getSimilarity(const IBS &other, bool w, double a, double b, double c
         topoSame = bettiNumbers[0] == other.bettiNumbers[0];
         topoSame = topoSame && bettiNumbers[1] == other.bettiNumbers[1];
         topoSame = topoSame && bettiNumbers[2] == other.bettiNumbers[2];
+
+        DebugLogger::ss << "BETTI (this vs other)" << std::endl;
+
+        DebugLogger::ss << "0: " << bettiNumbers[0] << " vs " << other.bettiNumbers[0] << std::endl;
+        DebugLogger::ss << "1: " << bettiNumbers[1] << " vs " << other.bettiNumbers[1] << std::endl;
+        DebugLogger::ss << "2: " << bettiNumbers[2] << " vs " << other.bettiNumbers[2] << std::endl;
+        DebugLogger::log();
     }
 
     //DebugLogger::ss << "Mapping vectors on Eigen vectors...";
@@ -114,11 +124,18 @@ double IBS::getSimilarity(const IBS &other, bool w, double a, double b, double c
 
     //std::cout << thisPfh.sum() << " " << otherPfh.sum() << std::endl;
 
-    //std::cout << l1Pfh << " " << l1Dist << " " << l1Dir << std::endl;
+    DebugLogger::ss << l1Pfh << " " << l1Dist << " " << l1Dir;
+    DebugLogger::log();
 
     double geoDist = a * l1Pfh + b * l1Dir + c * l1Dist;
-
-    return w ? static_cast<int>(topoSame) * (1 - geoDist) : (1 - geoDist);
+    DebugLogger::ss << geoDist;
+    DebugLogger::log();
+    DebugLogger::ss << topoSame;
+    DebugLogger::log();
+    double sim = w ? static_cast<int>(topoSame) * (1 - geoDist) : (1 - geoDist);
+    DebugLogger::ss << sim;
+    DebugLogger::log();
+    return sim;
 }
 
 /*void IBS::draw(    bool drawIbsSample, bool drawIbsWeight, QColor color)
@@ -504,6 +521,11 @@ void IBS::computeBettiNumbers()
 
     int positive, negative, positiveTri, negativeTri;
     positive = negative = positiveTri = negativeTri = 0;
+    DebugLogger::ss << "Positive: " << positive << std::endl;
+    DebugLogger::ss << "Negative: " << negative << std::endl;
+    DebugLogger::ss << "PositiveTri: " << positiveTri << std::endl;
+    DebugLogger::ss << "NegativeTri: " << negativeTri << std::endl;
+    DebugLogger::log();
 
     std::vector< std::vector<Edge> > complexEdgeIdx;
     std::vector<int> complexOpenEdgeNumber;
@@ -613,11 +635,20 @@ void IBS::computeBettiNumbers()
             negativeTri++;
         }    
     }    
+    DebugLogger::ss << "Positive: " << positive << std::endl;
+    DebugLogger::ss << "Negative: " << negative << std::endl;
+    DebugLogger::ss << "PositiveTri: " << positiveTri << std::endl;
+    DebugLogger::ss << "NegativeTri: " << negativeTri << std::endl;
+    DebugLogger::log();
 
     bettiNumbers.clear();
     bettiNumbers.push_back(mesh3d->number_of_vertices() - 1 - negative);
     bettiNumbers.push_back(positive-negativeTri);
     bettiNumbers.push_back(positiveTri);
+
+    DebugLogger::ss << "Calculated Betti: ";
+    DebugLogger::ss << bettiNumbers[0] << ", " << bettiNumbers[1] << ", " << bettiNumbers[2];
+    DebugLogger::log();
 
     // there might be small holes, set a threshold for computing b2
     int eThreshold = 10;
@@ -628,8 +659,8 @@ void IBS::computeBettiNumbers()
         if( complexOpenEdgeNumber[i] >= 0 ) 
         {
             
-            DebugLogger::ss << "Complex " << complexNum++ << ": has " << complexOpenEdgeNumber[i] << "open edges";
-            DebugLogger::log();
+            /* DebugLogger::ss << "Complex " << complexNum++ << ": has " << complexOpenEdgeNumber[i] << "open edges"; */
+            /* DebugLogger::log(); */
 
             if (complexOpenEdgeNumber[i]>0 && complexOpenEdgeNumber[i] <= eThreshold)
             {
