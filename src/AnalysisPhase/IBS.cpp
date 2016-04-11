@@ -532,6 +532,7 @@ void IBS::computeBettiNumbers()
     std::shared_ptr<Mesh3d> mesh3d = ibsObj->getMesh().mesh3d;
     EdgeProperty<int> edgeComplexIdx = mesh3d->add_property_map<Edge,int>("e:complexIdx", -1).first;
 
+
     //CGAL::Halfedge_around_face_iterator<Mesh3d> feit, feend;
     BOOST_FOREACH(Face f_id, mesh3d->faces())
     {

@@ -313,6 +313,12 @@ void Object::sampleUniform(int num)
     Sampler s(m_mesh);
     m_uniformSamples = s.getSamples(num, 0);
 
+    for ( int i = 0; i < 10; i++)
+    {
+        DebugLogger::ss << "Sample " << i << " = (" << m_uniformSamples[i].pos.x() << "," << m_uniformSamples[i].pos.y() << "," << m_uniformSamples[i].pos.z() << ")" << std::endl;
+    }
+    DebugLogger::log();
+
     m_uniformSampleDensity = static_cast<double>(num) / m_mesh.getSurfaceArea();
 }
 

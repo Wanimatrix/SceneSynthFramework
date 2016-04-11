@@ -9,7 +9,7 @@ Hu, Ruizhen, et al. "Interaction Context (ICON): Towards a Geometric Functionali
 
 Sampler::Sampler(const Mesh &srcMesh, SamplingMethod samplingMethod)
 {
-  //srand (time(NULL));
+    srand (123456789);
     /*if(srcMesh == NULL) 
         return;
     else*/

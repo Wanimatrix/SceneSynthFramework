@@ -76,7 +76,7 @@ set ( LIB_DIR ${CMAKE_SOURCE_DIR}/../libs)
     ## CGAL
     #set ( CGAL_DIR ${LIB_DIR}/CGAL-4.7)
     #set ( CGAL_DIR /usr/local)
-    set ( CGAL_DIR ${LIB_DIR}/cgal )
+    set ( CGAL_DIR ${LIB_DIR}/cgal4.8 )
     link_directories ( ${CGAL_DIR}/lib )
     if (CYGWIN)
         list ( APPEND LIBRARY_LINKS_LST CGAL.dll CGAL_Core.dll)
