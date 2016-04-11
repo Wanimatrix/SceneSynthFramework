@@ -53,3 +53,5 @@ Thumbs.db
 ######################
 *CMakeFiles*
 *CMakeCache*
+
+bin/sceneSynth

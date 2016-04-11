@@ -532,6 +532,12 @@ void IBS::computeBettiNumbers()
     std::shared_ptr<Mesh3d> mesh3d = ibsObj->getMesh().mesh3d;
     EdgeProperty<int> edgeComplexIdx = mesh3d->add_property_map<Edge,int>("e:complexIdx", -1).first;
 
+    int positiveCounter = 0;
+    int negativeCounter1 = 0;
+    int negativeCounter2 = 0;
+    int positiveTriCounter = 0;
+    int negativeTriCounter = 0;
+
 
     //CGAL::Halfedge_around_face_iterator<Mesh3d> feit, feend;
     BOOST_FOREACH(Face f_id, mesh3d->faces())
@@ -585,6 +591,7 @@ void IBS::computeBettiNumbers()
                     if (vComplexIdx[0] == vComplexIdx[1]) // if two end points correspond to same complex 
                     {
                         positive++;
+                        positiveCounter++;
                     }
                     else// if two end points correspond to two different complexes
                     {
@@ -606,6 +613,7 @@ void IBS::computeBettiNumbers()
                         }
 
                         negative++;
+                        negativeCounter1++;
                     }
                 }
                 else // create a new complex
@@ -617,6 +625,7 @@ void IBS::computeBettiNumbers()
                     complexOpenEdgeNumber.push_back(1);
 
                     negative++;
+                    negativeCounter2++;
                 }
             }        
 
@@ -630,16 +639,24 @@ void IBS::computeBettiNumbers()
         if (triComplexIdx[0] == triComplexIdx[1] && triComplexIdx[0] == triComplexIdx[2] && complexOpenEdgeNumber[triComplexIdx[0]] == 0)
         {
             positiveTri++;
+            positiveTriCounter++;
         }            
         else 
         {
             negativeTri++;
+            negativeTriCounter++;
         }    
     }    
     DebugLogger::ss << "Positive: " << positive << std::endl;
     DebugLogger::ss << "Negative: " << negative << std::endl;
     DebugLogger::ss << "PositiveTri: " << positiveTri << std::endl;
     DebugLogger::ss << "NegativeTri: " << negativeTri << std::endl;
+    DebugLogger::log();
+    DebugLogger::ss << "COUNTERS" << std::endl;
+    DebugLogger::ss << "Positive: " << positiveCounter << std::endl;
+    DebugLogger::ss << "Negative: " << negativeCounter1 << " + " << negativeCounter2 << " = " << (negativeCounter1+negativeCounter2) << std::endl;
+    DebugLogger::ss << "PositiveTriCounter: " << positiveTriCounter << std::endl;
+    DebugLogger::ss << "NegativeTriCounter: " << negativeTriCounter << std::endl;
     DebugLogger::log();
 
     bettiNumbers.clear();
