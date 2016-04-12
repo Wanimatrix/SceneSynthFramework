@@ -978,6 +978,7 @@ Mesh IbsGenerator::buildIbsMesh( int i,  std::vector<std::pair<int, int>>& sampl
 
     // add faces
     Face f;
+    int faceCounter = 0;
     bool created;
     FaceProperty<Vector3d> faceNormals;
     boost::tie(faceNormals, created) = mesh3d->add_property_map<Face,Vector3d>("f:normal");
@@ -1004,6 +1005,7 @@ Mesh IbsGenerator::buildIbsMesh( int i,  std::vector<std::pair<int, int>>& sampl
                 if (f != Mesh3d::null_face())//(f.is_valid())
                     faceNormals[f] = CGAL::normal(points[cgal_vertIdxes[ridgesNew[j][0]]], points[cgal_vertIdxes[ridgesNew[j][k]]], points[cgal_vertIdxes[ridgesNew[j][k+1]]]);
             }    
+            faceCounter++;
 
             if (f != Mesh3d::null_face())//(f.is_valid())
             {    
@@ -1016,6 +1018,23 @@ Mesh IbsGenerator::buildIbsMesh( int i,  std::vector<std::pair<int, int>>& sampl
             }
 
         }
+    }
+    DebugLogger::ss << "Faces added: " << faceCounter << std::endl;
+    DebugLogger::ss << "Mesh really has " << mesh3d->number_of_faces() << " faces.";
+    DebugLogger::log();
+
+    BOOST_FOREACH(Vertex v_id, mesh3d->vertices())
+    {
+        DebugLogger::ss << "Next vertex ...";
+        DebugLogger::log();
+        CGAL::Halfedge_around_source_circulator<Mesh3d> vhit(mesh3d->halfedge(v_id),*mesh3d), vhend(vhit);
+        do 
+        {
+            Edge e = mesh3d->edge(*vhit);
+            Vertex otherV = (mesh3d->vertex(e,0) == v_id) ? mesh3d->vertex(e,1) : mesh3d->vertex(e,0);
+            DebugLogger::ss << "There is an edge between " << v_id << " and " << otherV;
+            DebugLogger::log();
+        } while (++vhit != vhend);
     }
 
     if (samplePairs.size() != mesh3d->number_of_faces())
