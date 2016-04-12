@@ -124,6 +124,7 @@ double IBS::getSimilarity(const IBS &other, bool w, double a, double b, double c
 
     //std::cout << thisPfh.sum() << " " << otherPfh.sum() << std::endl;
 
+    DebugLogger::ss << "Similarity calculations." << std::endl;
     DebugLogger::ss << l1Pfh << " " << l1Dist << " " << l1Dir;
     DebugLogger::log();
 
@@ -538,6 +539,8 @@ void IBS::computeBettiNumbers()
     int positiveTriCounter = 0;
     int negativeTriCounter = 0;
 
+    DebugLogger::ss << "Amount of faces: " << mesh3d->number_of_faces();
+    DebugLogger::log();
 
     //CGAL::Halfedge_around_face_iterator<Mesh3d> feit, feend;
     BOOST_FOREACH(Face f_id, mesh3d->faces())
@@ -566,11 +569,15 @@ void IBS::computeBettiNumbers()
                 for (int vIdx=0; vIdx<2; vIdx++)
                 {
                     Vertex v = mesh3d->vertex(edge, vIdx);
+                    DebugLogger::ss << "Vertex " << vIdx << ": " << v;
+                    DebugLogger::log();
 
                     CGAL::Halfedge_around_source_circulator<Mesh3d> vhit(mesh3d->halfedge(v),*mesh3d), vhend(vhit);
                     //vhit = vhend = mesh->halfedges(v);
                     do 
                     {
+                        DebugLogger::ss << "ComplexIdx for an edge between " << v << " and " << ((mesh3d->vertex(mesh3d->edge(*vhit),0) == v) ? mesh3d->vertex(mesh3d->edge(*vhit),1) : mesh3d->vertex(mesh3d->edge(*vhit),0)) << ": " << edgeComplexIdx[mesh3d->edge(*vhit)];
+                        DebugLogger::log();
                         if (edgeComplexIdx[mesh3d->edge(*vhit)] != -1)
                         {
                             vComplexIdx[vIdx] = edgeComplexIdx[mesh3d->edge(*vhit)];
@@ -595,6 +602,8 @@ void IBS::computeBettiNumbers()
                     }
                     else// if two end points correspond to two different complexes
                     {
+                        DebugLogger::ss << "vComplexIdxes: " << vComplexIdx[0] << ", " << vComplexIdx[1];
+                        DebugLogger::log();
                         // if both two complexes are valid, merge them
                         if (vComplexIdx[0]!=-1 && vComplexIdx[1]!=-1)
                         {
@@ -610,7 +619,17 @@ void IBS::computeBettiNumbers()
 
                             complexEdgeIdx[vComplexIdx[1]].clear();
                             complexOpenEdgeNumber[vComplexIdx[1]] = -1;
+                            DebugLogger::ss << "complexOpenEdgeNumber[vComplexIdx[1]]: " << complexOpenEdgeNumber[vComplexIdx[1]];
+                            DebugLogger::log();
                         }
+                        int amount = 0;
+                        for( int b=0; b<complexOpenEdgeNumber.size(); b++ )
+                        {
+                            if( complexOpenEdgeNumber[b] >= 0 ) 
+                                amount++;
+                        }
+                        DebugLogger::ss << "Amount of complexes: " << amount;
+                        DebugLogger::log();
 
                         negative++;
                         negativeCounter1++;
@@ -618,6 +637,8 @@ void IBS::computeBettiNumbers()
                 }
                 else // create a new complex
                 {
+                    DebugLogger::ss << "New complex created, total created: " << complexOpenEdgeNumber.size()+1;
+                    DebugLogger::log();
                     std::vector<Edge> newComplex;
                     newComplex.push_back(edge);
                     edgeComplexIdx[edge] = complexEdgeIdx.size();
@@ -671,11 +692,12 @@ void IBS::computeBettiNumbers()
     // there might be small holes, set a threshold for computing b2
     int eThreshold = 10;
 
-    int complexNum = 1;
+    int complexNum = 0;
     for( int i=0; i<complexOpenEdgeNumber.size(); i++ )
     {
         if( complexOpenEdgeNumber[i] >= 0 ) 
         {
+            complexNum++;
             
             /* DebugLogger::ss << "Complex " << complexNum++ << ": has " << complexOpenEdgeNumber[i] << "open edges"; */
             /* DebugLogger::log(); */
@@ -686,6 +708,9 @@ void IBS::computeBettiNumbers()
             }
         }
     }
+
+    DebugLogger::ss << "Amount of complexes: " << complexNum;
+    DebugLogger::log();
 
     DebugLogger::ss << "New code --- Time elapsed: " << t.getElapsedTime() << " ms";
     DebugLogger::log();

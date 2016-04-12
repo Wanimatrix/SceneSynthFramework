@@ -11,7 +11,7 @@ include_directories(/usr/local/include)
 link_directories ( /usr/local/lib )
 
 # set compiler and linker flags
-set (COMPILER_FLAGS "-std=c++11 -m64 -U__STRICT_ANSI__ -fopenmp -O2 -Wno-deprecated ")
+set (COMPILER_FLAGS "-std=c++11 -m64 -U__STRICT_ANSI__ -fopenmp -O0 -Wno-deprecated ")
 set (LINK_FLAGS "-fopenmp")
 
 if (PROFILING)

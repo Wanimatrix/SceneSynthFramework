@@ -313,6 +313,7 @@ void Object::sampleUniform(int num)
     Sampler s(m_mesh);
     m_uniformSamples = s.getSamples(num, 0);
 
+    DebugLogger::ss << "Samples for " << m_name << std::endl;
     for ( int i = 0; i < 10; i++)
     {
         DebugLogger::ss << "Sample " << i << " = (" << m_uniformSamples[i].pos.x() << "," << m_uniformSamples[i].pos.y() << "," << m_uniformSamples[i].pos.z() << ")" << std::endl;

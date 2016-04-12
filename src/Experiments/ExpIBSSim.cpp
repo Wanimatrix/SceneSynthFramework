@@ -131,7 +131,6 @@ std::vector<std::shared_ptr<IBS>> ExpIBSSim::computeIBSBetweenTwoSets(std::vecto
 void ExpIBSSim::computeFeatures(const std::vector<std::shared_ptr<IBS>> &ibses, bool plot = false)
 {
     int ibsAmount = ibses.size();
-    //#pragma omp parallel for 
     for(int i = 0; i < ibsAmount; i++) {
         IBS *ibs = &*ibses[i];
         ibs->computeGeomFeatures();
@@ -155,7 +154,11 @@ std::pair<std::vector<std::shared_ptr<Object>>,std::vector<std::shared_ptr<Objec
     }
 
     // Sample the objects in the scene
+    DebugLogger::ss << "This is where sampling is done?";
+    DebugLogger::log();
     m_scene.samplePoints();
+    DebugLogger::ss << "Sampling is def. done";
+    DebugLogger::log();
     assert(set2.size() > 0);
     return std::pair<std::vector<std::shared_ptr<Object>>,std::vector<std::shared_ptr<Object>>>(set1,set2);
 }

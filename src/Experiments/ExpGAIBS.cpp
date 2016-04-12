@@ -30,6 +30,9 @@ std::vector<std::shared_ptr<IBS>> ExpGAIBS::compute(std::pair<std::vector<std::s
     computeFeatures(ibses,true);
     timer.stop();
     timer.printElapsedTime(std::string("Feature calculation"));
+    /* std::vector<std::shared_ptr<Object>> tmpObjs; */
+    /* tmpObjs.push_back(ibses[0]); */
+    /* Display::display(tmpObjs,path+std::string("ibses.blend"),false); */
 
     assert(sets.second.size() == 1 && sets.second[0]->getName().find("Table") != std::string::npos);
 
