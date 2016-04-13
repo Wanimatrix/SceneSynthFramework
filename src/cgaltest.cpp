@@ -29,7 +29,7 @@ int main()
         {
             Edge e = m.edge(*vhit);
             Vertex other = (m.vertex(e,0) == vd) ? m.vertex(e,1) : m.vertex(e,0);
-            std::cout << "There is an edge between " << vd << " and " << other << std::endl;
+            std::cout << "There is an edge between " << vd << " (" << m.point(vd) << ") and " << other << " (" << m.point(other) << ")" << std::endl;
         } while (++vhit != vhend);
     }
 }
