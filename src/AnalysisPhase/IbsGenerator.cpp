@@ -986,6 +986,8 @@ Mesh IbsGenerator::buildIbsMesh( int i,  std::vector<std::pair<int, int>>& sampl
     for(int j=0; j<ridgesNew.size(); j++)
     {
         int *pair = ridgeSitePair[remainRidgeIdx[j]];
+        DebugLogger::ss << "New faces with " << ridgesNew[j].size() << " vertices";
+        DebugLogger::log();
         // add the triangle fan for each polygon
         for (int k=1; k<ridgesNew[j].size()-1; k++)
         {
@@ -1015,6 +1017,20 @@ Mesh IbsGenerator::buildIbsMesh( int i,  std::vector<std::pair<int, int>>& sampl
             {
                 DebugLogger::ss << "Face not valid!";
                 DebugLogger::log();
+            }
+            BOOST_FOREACH(Vertex v_id, mesh3d->vertices())
+            {
+                /* DebugLogger::ss << "Next vertex ..."; */
+                /* DebugLogger::log(); */
+                CGAL::Halfedge_around_source_circulator<Mesh3d> vhit(mesh3d->halfedge(v_id),*mesh3d), vhend(vhit);
+                do 
+                {
+                    Edge e = mesh3d->edge(*vhit);
+                    if (e == Mesh3d::null_edge()) break;
+                    Vertex otherV = (mesh3d->vertex(e,0) == v_id) ? mesh3d->vertex(e,1) : mesh3d->vertex(e,0);
+                    DebugLogger::ss << "There is an edge between " << v_id << " and " << otherV;
+                    DebugLogger::log();
+                } while (++vhit != vhend);
             }
 
         }
