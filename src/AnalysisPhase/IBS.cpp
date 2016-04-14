@@ -73,9 +73,6 @@ double IBS::getSimilarity(const IBS &other, bool w, double a, double b, double c
     assert(dirHist.size() == 10);
     assert(distHist.size() == 10);
 
-    DebugLogger::ss << "++  SIMILARITY  ++";
-    DebugLogger::log();
-
     std::vector<double> invertedDirHist(dirHist.size());
     
     for (int i = 0; i < invertedDirHist.size()/2; i++)
@@ -91,12 +88,6 @@ double IBS::getSimilarity(const IBS &other, bool w, double a, double b, double c
         topoSame = topoSame && bettiNumbers[1] == other.bettiNumbers[1];
         topoSame = topoSame && bettiNumbers[2] == other.bettiNumbers[2];
 
-        DebugLogger::ss << "BETTI (this vs other)" << std::endl;
-
-        DebugLogger::ss << "0: " << bettiNumbers[0] << " vs " << other.bettiNumbers[0] << std::endl;
-        DebugLogger::ss << "1: " << bettiNumbers[1] << " vs " << other.bettiNumbers[1] << std::endl;
-        DebugLogger::ss << "2: " << bettiNumbers[2] << " vs " << other.bettiNumbers[2] << std::endl;
-        DebugLogger::log();
     }
 
     //DebugLogger::ss << "Mapping vectors on Eigen vectors...";
@@ -124,9 +115,6 @@ double IBS::getSimilarity(const IBS &other, bool w, double a, double b, double c
 
     //std::cout << thisPfh.sum() << " " << otherPfh.sum() << std::endl;
 
-    DebugLogger::ss << "Similarity calculations." << std::endl;
-    DebugLogger::ss << l1Pfh << " " << l1Dist << " " << l1Dir;
-    DebugLogger::log();
 
     double geoDist = a * l1Pfh + b * l1Dir + c * l1Dist;
     DebugLogger::ss << geoDist;
@@ -522,25 +510,12 @@ void IBS::computeBettiNumbers()
 
     int positive, negative, positiveTri, negativeTri;
     positive = negative = positiveTri = negativeTri = 0;
-    DebugLogger::ss << "Positive: " << positive << std::endl;
-    DebugLogger::ss << "Negative: " << negative << std::endl;
-    DebugLogger::ss << "PositiveTri: " << positiveTri << std::endl;
-    DebugLogger::ss << "NegativeTri: " << negativeTri << std::endl;
-    DebugLogger::log();
 
     std::vector< std::vector<Edge> > complexEdgeIdx;
     std::vector<int> complexOpenEdgeNumber;
     std::shared_ptr<Mesh3d> mesh3d = ibsObj->getMesh().mesh3d;
     EdgeProperty<int> edgeComplexIdx = mesh3d->add_property_map<Edge,int>("e:complexIdx", -1).first;
 
-    int positiveCounter = 0;
-    int negativeCounter1 = 0;
-    int negativeCounter2 = 0;
-    int positiveTriCounter = 0;
-    int negativeTriCounter = 0;
-
-    DebugLogger::ss << "Amount of faces: " << mesh3d->number_of_faces();
-    DebugLogger::log();
 
     //CGAL::Halfedge_around_face_iterator<Mesh3d> feit, feend;
     BOOST_FOREACH(Face f_id, mesh3d->faces())
@@ -569,15 +544,11 @@ void IBS::computeBettiNumbers()
                 for (int vIdx=0; vIdx<2; vIdx++)
                 {
                     Vertex v = mesh3d->vertex(edge, vIdx);
-                    DebugLogger::ss << "Vertex " << vIdx << ": " << v;
-                    DebugLogger::log();
 
-                    CGAL::Halfedge_around_source_circulator<Mesh3d> vhit(mesh3d->halfedge(v),*mesh3d), vhend(vhit);
+                    CGAL::Halfedge_around_source_circulator<Mesh3d> vhit(v,*mesh3d), vhend(vhit);
                     //vhit = vhend = mesh->halfedges(v);
                     do 
                     {
-                        DebugLogger::ss << "ComplexIdx for an edge between " << v << " and " << ((mesh3d->vertex(mesh3d->edge(*vhit),0) == v) ? mesh3d->vertex(mesh3d->edge(*vhit),1) : mesh3d->vertex(mesh3d->edge(*vhit),0)) << ": " << edgeComplexIdx[mesh3d->edge(*vhit)];
-                        DebugLogger::log();
                         if (edgeComplexIdx[mesh3d->edge(*vhit)] != -1)
                         {
                             vComplexIdx[vIdx] = edgeComplexIdx[mesh3d->edge(*vhit)];
@@ -598,12 +569,9 @@ void IBS::computeBettiNumbers()
                     if (vComplexIdx[0] == vComplexIdx[1]) // if two end points correspond to same complex 
                     {
                         positive++;
-                        positiveCounter++;
                     }
                     else// if two end points correspond to two different complexes
                     {
-                        DebugLogger::ss << "vComplexIdxes: " << vComplexIdx[0] << ", " << vComplexIdx[1];
-                        DebugLogger::log();
                         // if both two complexes are valid, merge them
                         if (vComplexIdx[0]!=-1 && vComplexIdx[1]!=-1)
                         {
@@ -619,8 +587,6 @@ void IBS::computeBettiNumbers()
 
                             complexEdgeIdx[vComplexIdx[1]].clear();
                             complexOpenEdgeNumber[vComplexIdx[1]] = -1;
-                            DebugLogger::ss << "complexOpenEdgeNumber[vComplexIdx[1]]: " << complexOpenEdgeNumber[vComplexIdx[1]];
-                            DebugLogger::log();
                         }
                         int amount = 0;
                         for( int b=0; b<complexOpenEdgeNumber.size(); b++ )
@@ -628,17 +594,12 @@ void IBS::computeBettiNumbers()
                             if( complexOpenEdgeNumber[b] >= 0 ) 
                                 amount++;
                         }
-                        DebugLogger::ss << "Amount of complexes: " << amount;
-                        DebugLogger::log();
 
                         negative++;
-                        negativeCounter1++;
                     }
                 }
                 else // create a new complex
                 {
-                    DebugLogger::ss << "New complex created, total created: " << complexOpenEdgeNumber.size()+1;
-                    DebugLogger::log();
                     std::vector<Edge> newComplex;
                     newComplex.push_back(edge);
                     edgeComplexIdx[edge] = complexEdgeIdx.size();
@@ -646,7 +607,6 @@ void IBS::computeBettiNumbers()
                     complexOpenEdgeNumber.push_back(1);
 
                     negative++;
-                    negativeCounter2++;
                 }
             }        
 
@@ -660,26 +620,13 @@ void IBS::computeBettiNumbers()
         if (triComplexIdx[0] == triComplexIdx[1] && triComplexIdx[0] == triComplexIdx[2] && complexOpenEdgeNumber[triComplexIdx[0]] == 0)
         {
             positiveTri++;
-            positiveTriCounter++;
         }            
         else 
         {
             negativeTri++;
-            negativeTriCounter++;
         }    
     }    
-    DebugLogger::ss << "Positive: " << positive << std::endl;
-    DebugLogger::ss << "Negative: " << negative << std::endl;
-    DebugLogger::ss << "PositiveTri: " << positiveTri << std::endl;
-    DebugLogger::ss << "NegativeTri: " << negativeTri << std::endl;
-    DebugLogger::log();
-    DebugLogger::ss << "COUNTERS" << std::endl;
-    DebugLogger::ss << "Positive: " << positiveCounter << std::endl;
-    DebugLogger::ss << "Negative: " << negativeCounter1 << " + " << negativeCounter2 << " = " << (negativeCounter1+negativeCounter2) << std::endl;
-    DebugLogger::ss << "PositiveTriCounter: " << positiveTriCounter << std::endl;
-    DebugLogger::ss << "NegativeTriCounter: " << negativeTriCounter << std::endl;
-    DebugLogger::log();
-
+    
     bettiNumbers.clear();
     bettiNumbers.push_back(mesh3d->number_of_vertices() - 1 - negative);
     bettiNumbers.push_back(positive-negativeTri);
@@ -709,8 +656,6 @@ void IBS::computeBettiNumbers()
         }
     }
 
-    DebugLogger::ss << "Amount of complexes: " << complexNum;
-    DebugLogger::log();
 
     DebugLogger::ss << "New code --- Time elapsed: " << t.getElapsedTime() << " ms";
     DebugLogger::log();

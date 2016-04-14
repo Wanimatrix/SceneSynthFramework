@@ -151,8 +151,8 @@ void Object::initBbox(std::vector<Point3d> pointVec)
               bbox.ymin(), bbox.ymax(), 
               bbox.zmin(), bbox.zmax(),
               1          , 1          ;
-    DebugLogger::ss << "Bbox: " << m_bbox;
-    DebugLogger::log();
+    /* DebugLogger::ss << "Bbox: " << m_bbox; */
+    /* DebugLogger::log(); */
 }
 
 void Object::initCentroid(std::vector<Point3d> pointVec)
@@ -312,13 +312,6 @@ void Object::sampleUniform(int num)
 {
     Sampler s(m_mesh);
     m_uniformSamples = s.getSamples(num, 0);
-
-    DebugLogger::ss << "Samples for " << m_name << std::endl;
-    for ( int i = 0; i < 10; i++)
-    {
-        DebugLogger::ss << "Sample " << i << " = (" << m_uniformSamples[i].pos.x() << "," << m_uniformSamples[i].pos.y() << "," << m_uniformSamples[i].pos.z() << ")" << std::endl;
-    }
-    DebugLogger::log();
 
     m_uniformSampleDensity = static_cast<double>(num) / m_mesh.getSurfaceArea();
 }

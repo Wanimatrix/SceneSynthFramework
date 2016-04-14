@@ -9,7 +9,7 @@ Hu, Ruizhen, et al. "Interaction Context (ICON): Towards a Geometric Functionali
 
 Sampler::Sampler(const Mesh &srcMesh, SamplingMethod samplingMethod)
 {
-    srand (123456789);
+    /* srand (123456789); */
     /*if(srcMesh == NULL) 
         return;
     else*/
@@ -114,10 +114,6 @@ SamplePoint Sampler::getSample(double weight)
           v2 << v[2].x(), v[2].y(), v[2].z();
           p << fpt[f].x(), fpt[f].y(), fpt[f].z();
           Point3d pos = weightedBaricentric(p, v0, v1, v2);
-
-          DebugLogger::ss << "Triangle (" << v0.transpose() << "," << v1.transpose() << "," << v2.transpose() << ")";
-          DebugLogger::ss << "; Sample: " << pos.x() << "," << pos.y() << "," << pos.z();
-          DebugLogger::log();
 
           sp = SamplePoint( pos, fnormal[f], weight, f);
 
