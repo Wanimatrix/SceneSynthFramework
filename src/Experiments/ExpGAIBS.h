@@ -9,7 +9,7 @@ public:
     virtual ~ExpGAIBS() {};
 
     virtual std::vector<std::shared_ptr<IBS>> compute(std::pair<std::vector<std::shared_ptr<Object>>,std::vector<std::shared_ptr<Object>>> sets);
-    virtual std::string getExpPath();
+    /* virtual std::string getExpPath(); */
     virtual void output(std::vector<std::shared_ptr<IBS>> ibses, std::string path);
 };
 

@@ -116,6 +116,7 @@ std::pair<double,std::shared_ptr<IBS>> IBSFitEval::eval(Individual &i)
                 similarity = tmpSimilarity;
             }
         }
+        similarity = (similarity > 0.8) ? 0.8 : similarity;
         std::ostringstream oss;
         oss << ibses[0]->ibsObj->getName() << "_" << similarity;
         ibses[0]->ibsObj->setName(oss.str());

@@ -26,7 +26,7 @@ public:
     virtual std::pair<std::vector<std::shared_ptr<Object>>,std::vector<std::shared_ptr<Object>>> handleInput(std::shared_ptr<Input> in, std::string centralObj);
     virtual std::vector<std::shared_ptr<IBS>> compute(std::pair<std::vector<std::shared_ptr<Object>>,std::vector<std::shared_ptr<Object>>> sets);
     virtual void output(std::vector<std::shared_ptr<IBS>> ibses, std::string path);
-    virtual std::string getExpPath();
+    /* virtual std::string getExpPath(); */
 protected:
     Scene m_scene;
     IbsSampleScheme::SampleScheme m_sampleScheme;

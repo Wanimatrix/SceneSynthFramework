@@ -124,7 +124,7 @@ double GA::grade()
     }
     std::ostringstream genNb;
     genNb << m_generation;
-    m_fitEval.displayIndividualsInScene(m_population, m_options.outputPath+"generationResult_"+genNb.str()+".blend", ibsObjs);
+    m_fitEval.displayIndividualsInScene(m_population, m_options.getOutputPath()+"generationResult_"+genNb.str()+".blend", ibsObjs);
     DebugLogger::ss << "Grading done ..." << std::endl;
     DebugLogger::ss << "Best fitness was " << bestFitness;
     DebugLogger::log();
@@ -135,7 +135,7 @@ int GA::tournamentSelection()
 {
     int winnerIdx = GA::uniformInt(0,m_population.size()-1);
     double winnerFitness = GA::fitness(winnerIdx).first;
-    for(int i = 1; i < m_options.tournamentSize; i++)
+    for(int i = 1; i < m_options.getTournamentSize(); i++)
     {
         int newIdx = GA::uniformInt(0,m_population.size()-1);
         double newFitness = GA::fitness(newIdx).first;
@@ -149,20 +149,20 @@ int GA::tournamentSelection()
     return winnerIdx;
 }
 
-Individual GA::crossover(Individual male, Individual female)
-{
-    Individual newIndividual;
+/* Individual GA::crossover(Individual male, Individual female) */
+/* { */
+/*     Individual newIndividual; */
 
-    for(int g = 0; g < sizeof(newIndividual.vals)/sizeof(*newIndividual.vals); g++)
-    {
-        if(GA::uniformDouble(0,1) <= m_options.crossover)
-            newIndividual.vals[g] = male.vals[g];
-        else
-            newIndividual.vals[g] = female.vals[g];
-    }
+/*     for(int g = 0; g < sizeof(newIndividual.vals)/sizeof(*newIndividual.vals); g++) */
+/*     { */
+/*         if(GA::uniformDouble(0,1) <= m_options.getCrossoverRate()) */
+/*             newIndividual.vals[g] = male.vals[g]; */
+/*         else */
+/*             newIndividual.vals[g] = female.vals[g]; */
+/*     } */
 
-    return newIndividual;
-}
+/*     return newIndividual; */
+/* } */
 
 Individual GA::spatialCrossover(Individual male, Individual female)
 {
@@ -172,8 +172,8 @@ Individual GA::spatialCrossover(Individual male, Individual female)
     double X1 = GA::normalDouble(0,1);
     double X2 = GA::normalDouble(0,1);
     double X3 = GA::normalDouble(0,1);
-    double radius = m_options.crossoverRadius;
-    double distance = m_options.crossoverRadius * std::pow(GA::uniformDouble(0,1),1.0/3.0);
+    double radius = m_options.getCrossoverRadius();
+    double distance = m_options.getCrossoverRadius() * std::pow(GA::uniformDouble(0,1),1.0/3.0);
     double factor = distance/std::sqrt(X1*X1 + X2*X2 + X3*X3);
     Individual newIndividual;
     newIndividual.vals[0] = sphereCenter[0]+(factor*X1);
@@ -188,9 +188,9 @@ Individual GA::mutate(Individual ind)
     Individual mutated = ind;
     for(int g = 0; g < sizeof(ind.vals)/sizeof(*ind.vals); g++)
     {
-        if(GA::uniformDouble(0,1) <= m_options.mutate)
+        if(GA::uniformDouble(0,1) <= m_options.getMutationRate())
         {
-            double gene = GA::uniformDouble(m_options.minMaxIndividual.first.vals[g],m_options.minMaxIndividual.second.vals[g]);
+            double gene = GA::uniformDouble(m_options.getMinMaxIndividual().first.vals[g],m_options.getMinMaxIndividual().second.vals[g]);
             ind.vals[g] = gene;
         }
     }
@@ -293,7 +293,7 @@ std::vector<Individual> GA::evolve()
     
     std::vector<Individual> newPopulation;
 
-    if (m_options.elitism > 0 && m_options.elitism < m_population.size())
+    if (m_options.getElitismAmount() > 0 && m_options.getElitismAmount() < m_population.size())
     {
         // Sort individuals on fitness
         std::vector<std::pair<double,Individual>> fitnessPairs;
@@ -304,13 +304,13 @@ std::vector<Individual> GA::evolve()
             return a.first > b.first;
         });
 
-        for(int i = 0; i < m_options.elitism; i++)
+        for(int i = 0; i < m_options.getElitismAmount(); i++)
         {
             newPopulation.push_back(fitnessPairs[i].second);
         }
     }
 
-    for(int i = m_options.elitism; i < m_population.size(); i++)
+    for(int i = m_options.getElitismAmount(); i < m_population.size(); i++)
     {
         Individual child;
         do
@@ -325,7 +325,7 @@ std::vector<Individual> GA::evolve()
         newPopulation.push_back(child);
     }
 
-    for(int i = m_options.elitism; i < m_population.size(); i++)
+    for(int i = m_options.getElitismAmount(); i < m_population.size(); i++)
     {
         Individual tmpIndividual;
         do
@@ -351,7 +351,7 @@ double GA::run()
 {
     DebugLogger::ss << "Starting genetic algorithm.";
     DebugLogger::log();
-    createPopulation(m_options.populationSize, m_options.minMaxIndividual.first, m_options.minMaxIndividual.second);
+    createPopulation(m_options.getPopulationSize(), m_options.getMinMaxIndividual().first, m_options.getMinMaxIndividual().second);
     DebugLogger::ss << "Population with size " << m_population.size() << " created";
     DebugLogger::log();
     m_generation = 0;
@@ -367,7 +367,7 @@ double GA::run()
         m_population = evolve();
         m_generation++;
         popFitness = grade();
-        if(m_options.logFitness) 
+        if(m_options.getLogFitness()) 
         {
             //DebugLogger::on();
             DebugLogger::ss << "Current fitness: " << popFitness;

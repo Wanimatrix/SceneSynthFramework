@@ -13,6 +13,7 @@
 #include "../Display/Display.h"
 #include "../AnalysisPhase/IbsGenerator.h"
 #include "../Debug/DebugTools.h"
+#include "Configuration.h"
 #include "Experiment.h"
 #include "ExpIBSSim.h"
 #include "ExpGAIBS.h"
@@ -82,47 +83,65 @@ typedef std::vector<std::string> SceneList;
     //};
 //}
 
-typedef struct ParsedInfo {
-    IbsSampleScheme::SampleScheme sampleScheme = IbsSampleScheme::SampleScheme::UNIFORM;
-    std::string centralObj = "Plane";
-    std::vector<std::string> inputScenes;
-    std::string expId = "";
-    bool onePass = false;
-    int executionAmount = 1;
-} ParsedInfo;
+/* typedef struct ParsedInfo { */
+/*     IbsSampleScheme::SampleScheme sampleScheme = IbsSampleScheme::SampleScheme::UNIFORM; */
+/*     std::string centralObj = "Plane"; */
+/*     std::vector<std::string> inputScenes; */
+/*     std::string expId = ""; */
+/*     bool onePass = false; */
+/*     int executionAmount = 1; */
+/* } ParsedInfo; */
 
-ParsedInfo parse(int argc, const char* argv[]) {
-    ParsedInfo pi;
-    bool idSet = false;
-    for (int i = 1; i < argc; ++i) {
-        std::string flag = std::string(argv[i]);
-        if(flag == "-s" || flag == "--sampleMethod") {
-            std::string uppercSampleName = argv[++i];
-            boost::algorithm::to_upper(uppercSampleName);
-            pi.sampleScheme = IbsSampleScheme::getSampleScheme(uppercSampleName);
-            DebugLogger::ss << "Chosen sampleScheme: " << IbsSampleScheme::getSampleSchemeName(pi.sampleScheme);
-            DebugLogger::log();
-        } else if (flag == "-n")
-        {
-            pi.executionAmount = atoi(argv[++i]);
-        } else if(flag == "--centralObj") {
-            pi.centralObj = argv[++i];
-        } else if (flag == "--onePass") {
-          pi.onePass = true;
-        } else {
-            if (!idSet){
-                pi.expId = argv[i];
-                idSet = true;
-            } else {
-                while(i < argc) 
-                    pi.inputScenes.push_back(argv[i++]);
-            }
-        }
-    }
-    assert(pi.inputScenes.size() > 0);
-    assert(pi.expId != "");
-    return pi;
-}
+/* ParsedInfo parse(int argc, const char* argv[]) { */
+
+/*     // Parse parameters into ParsedInfo struct */
+/*     ParsedInfo pi; */
+/*     bool idSet = false; */
+/*     for (int i = 1; i < argc; ++i) { */
+/*         std::string flag = std::string(argv[i]); */
+/*         if(flag == "-s" || flag == "--sampleMethod") { */
+/*             std::string uppercSampleName = argv[++i]; */
+/*             boost::algorithm::to_upper(uppercSampleName); */
+/*             pi.sampleScheme = IbsSampleScheme::getSampleScheme(uppercSampleName); */
+/*             DebugLogger::ss << "Chosen sampleScheme: " << IbsSampleScheme::getSampleSchemeName(pi.sampleScheme); */
+/*             DebugLogger::log(); */
+/*             Configuration::getInstance().add("SampleMethod",IbsSampleScheme::getSampleSchemeName(pi.sampleScheme)); */
+/*         } else if (flag == "-n") */
+/*         { */
+/*             pi.executionAmount = atoi(argv[++i]); */
+/*         } else if(flag == "--centralObj") { */
+/*             pi.centralObj = argv[++i]; */
+/*         } else if (flag == "--onePass") { */
+/*           pi.onePass = true; */
+/*         } else { */
+/*             if (!idSet){ */
+/*                 pi.expId = argv[i]; */
+/*                 idSet = true; */
+/*             } else { */
+/*                 while(i < argc) */ 
+/*                     pi.inputScenes.push_back(argv[i++]); */
+/*             } */
+/*         } */
+/*     } */
+
+/*     // Record input configurations into configurations object */
+/*     Configuration::getInstance().add("SampleMethod",IbsSampleScheme::getSampleSchemeName(pi.sampleScheme)); */
+/*     Configuration::getInstance().add("NbExecutions",pi.executionAmount); */
+/*     Configuration::getInstance().add("CentralObject",pi.centralObj); */
+/*     Configuration::getInstance().add("OneVoronoi",pi.onePass); */
+/*     Configuration::getInstance().add("ExperimentId",pi.expId); */
+/*     std::ostringstream inSceneStream; */
+/*     for(std::string inSceneName : pi.inputScenes) */
+/*     { */
+/*         inSceneStream << inSceneName << ","; */
+/*     } */
+/*     Configuration::getInstance().add("InputScenes",inSceneStream); */
+
+/*     // Check if required parameters were given */
+/*     assert(pi.inputScenes.size() > 0); */
+/*     assert(pi.expId != ""); */
+/*     return pi; */
+/* } */
 
 std::shared_ptr<Input> loadScenes(std::vector<std::string> scenes) {
     std::vector<std::string> scenePaths;
@@ -153,39 +172,61 @@ std::string getTimestamp ()
 }
 
 int main(int argc, const char* argv[]) {
-#ifdef CGAL_DISABLE_ROUNDING_MATH_CHECK
-    std::cout << "DISABLE_ROUNDING_MATH_CHECK DEFINED" << std::endl;
-#endif
     std::shared_ptr<Input> input;
     std::vector<std::string> scenePaths;
 
     std::cout << "Starting experiment..." << std::endl;
 
-    ParsedInfo pi = parse(argc, argv);
+    // Read configuration from file
+    Configuration::getInstance().readFromFile(argv[1]);
+
+    /* ParsedInfo pi = parse(argc, argv); */
     DebugLogger::ss << "Loading scenes ...";
     DebugLogger::log();
-    input = loadScenes(pi.inputScenes);
+    std::vector<std::string> inputScenes;
+    std::string inputScenesStr = Configuration::getInstance().get("InputScenes");
+    boost::split(inputScenes, inputScenesStr, boost::is_any_of(","));
+    input = loadScenes(inputScenes);
     DebugLogger::ss << "Scenes loaded";
     DebugLogger::log();
     
     std::string timestamp = getTimestamp();
 
-    DebugLogger::ss << "Times executing: " << pi.executionAmount;
+    DebugLogger::ss << "Times executing: " << Configuration::getInstance().get("NbExecutions");
     DebugLogger::log();
 
-    for (int i = 0; i < pi.executionAmount; i++)
+    std::string expType = Configuration::getInstance().get("ExperimentType");
+    bool oneVoronoi = (Configuration::getInstance().get("OneVoronoi") == "1");
+    IbsSampleScheme::SampleScheme ss = IbsSampleScheme::getSampleScheme(Configuration::getInstance().get("SampleScheme"));
+    std::string expId = Configuration::getInstance().get("ExperimentId");
+    std::string centralObj = Configuration::getInstance().get("CentralObject");
+    std::ostringstream oss;
+    oss << EXP_PATH << "/" << expType << "/" << expId << "/" << timestamp << "/";
+    Configuration::getInstance().add("ExperimentBasePath",oss.str());
+    Configuration::getInstance().add("ExperimentTmpPath","/tmp/SceneSynthesis/");
+    for (int i = 0; i < std::stoi(Configuration::getInstance().get("NbExecutions")); i++)
     {
-        std::ostringstream oss;
-        oss << pi.expId << "/" << timestamp << "/" << i;
-        /* Experiment *IBSSimilarityExperiments = new ExpIBSSim(pi.sampleScheme,pi.onePass,oss.str()); */
-        /* IBSSimilarityExperiments->run(input,pi.centralObj); */
-        /* delete IBSSimilarityExperiments; */
-        /* Experiment *IBSSimPDFExperiment = new ExpIBSPDF(pi.sampleScheme,pi.onePass,pi.expId); */
-        /* IBSSimPDFExperiment->run(input,pi.centralObj); */
-        /* delete IBSSimPDFExperiment; */
-        Experiment *gaExperiment = new ExpGAIBS(pi.sampleScheme,pi.onePass,oss.str());
-        gaExperiment->run(input,pi.centralObj);
-        delete gaExperiment;
+        std::ostringstream ossExtended;
+        ossExtended << oss.str() << i << "/";
+        Configuration::getInstance().set("ExperimentRunPath",ossExtended.str());
+        if (expType == "ibssimilarity")
+        {
+            Experiment *IBSSimilarityExperiments = new ExpIBSSim(ss, oneVoronoi, expId);
+            IBSSimilarityExperiments->run(input,centralObj);
+            delete IBSSimilarityExperiments;
+        } else if (expType == "ibspdf")
+        {
+            Experiment *IBSSimPDFExperiment = new ExpIBSPDF(ss,oneVoronoi,expId);
+            IBSSimPDFExperiment->run(input,centralObj);
+            delete IBSSimPDFExperiment;
+        } else if (expType == "ibsga")
+        {
+            Experiment *gaExperiment = new ExpGAIBS(ss,oneVoronoi, expId);
+            gaExperiment->run(input,centralObj);
+            delete gaExperiment;
+        } else {
+            std::cerr << "Invalid ExperimentType";
+        }
     //for (int i = 0; i < 10; i++)
     //{
         //Experiment *idExperiment = new ExpIDIBS(pi.sampleScheme,pi.onePass,pi.expId);
@@ -193,5 +234,7 @@ int main(int argc, const char* argv[]) {
         //delete idExperiment;
     //}
     }
+    Configuration::getInstance().erase("ExperimentRunPath");
+    Configuration::getInstance().writeToFile(Configuration::getInstance().get("ExperimentBasePath"));
 }
 #endif

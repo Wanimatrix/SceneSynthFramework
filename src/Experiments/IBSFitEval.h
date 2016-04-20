@@ -1,5 +1,5 @@
 #pragma once
-#include "GATypes.h"
+#include "GAOptions.h"
 #include "../AnalysisPhase/IBS.h"
 #include "../Scene.h"
 #include "../Mesh.h"

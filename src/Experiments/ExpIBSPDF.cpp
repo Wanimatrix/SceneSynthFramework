@@ -176,11 +176,11 @@ void ExpIBSPDF::output(std::vector<std::shared_ptr<IBS>> ibses, std::string path
     Display::display(m_objects,path+std::string("pdf.blend"),false);
 }
 
-std::string ExpIBSPDF::getExpPath(){
-  std::string folderName = std::string(IbsSampleScheme::getSampleSchemeName(m_sampleScheme));
-  if(m_onePass)
-    folderName = "OneVoronoi_"+folderName;
-  return EXPTYPE+std::string("/")+folderName+"/"+m_ID;
+/* std::string ExpIBSPDF::getExpPath(){ */
+/*   std::string folderName = std::string(IbsSampleScheme::getSampleSchemeName(m_sampleScheme)); */
+/*   if(m_onePass) */
+/*     folderName = "OneVoronoi_"+folderName; */
+/*   return EXPTYPE+std::string("/")+folderName+"/"+m_ID; */
 
-}
+/* } */
 

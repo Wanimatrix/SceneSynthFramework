@@ -1,6 +1,6 @@
 #pragma once
 
-#include "GATypes.h"
+#include "GAOptions.h"
 #include "IBSFitEval.h"
 #include <vector>
 #include <random>
@@ -21,7 +21,7 @@ private:
     virtual int tournamentSelection();
     virtual std::vector<Individual> evolve();
     virtual Individual mutate(Individual ind);
-    virtual Individual crossover(Individual male, Individual female);
+    /* virtual Individual crossover(Individual male, Individual female); */
     virtual Individual spatialCrossover(Individual male, Individual female);
     static double uniformDouble(double min, double max);
     static double normalDouble(double mean, double variance);

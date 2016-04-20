@@ -6,8 +6,10 @@
 #include "../Display/Display.h"
 #include "GA.h"
 #include "IBSFitEval.h"
+#include "Configuration.h"
 
-#define EXPTYPE "ga"
+/* #define EXPTYPE "ga" */
+
 
 std::vector<std::shared_ptr<IBS>> ExpGAIBS::compute(std::pair<std::vector<std::shared_ptr<Object>>,std::vector<std::shared_ptr<Object>>> sets){
     // Compute Ibses between two sets
@@ -41,10 +43,9 @@ std::vector<std::shared_ptr<IBS>> ExpGAIBS::compute(std::pair<std::vector<std::s
     newScene.addObject(tableObj);
     //Display::display(newScene.getObjects(),EXP_PATH+"/"+getExpPath()+"/"+std::string("newScene.blend"),false);
     IBSFitEval ibsFitEval(ibses, newScene, sets.first[0]->getMesh(), m_sampleScheme);
-    GAOptions options;
-    options.logFitness = true;
-    options.populationSize = 20;
-    options.outputPath = EXP_PATH+"/"+getExpPath()+"/";
+    GAOptions options = GAOptions::loadFromConfig();
+    options.setPopulationSize(20);
+    options.setOutputPath(Configuration::getInstance().get("ExperimentRunPath"));
     std::vector<Object> sceneObjects;
     DebugLogger::ss << "Scene objects: " << newScene.getObjects().size() << std::endl;
     for(std::shared_ptr<Object> objPtr : newScene.getObjects()) {
@@ -71,10 +72,11 @@ std::vector<std::shared_ptr<IBS>> ExpGAIBS::compute(std::pair<std::vector<std::s
     DebugLogger::ss << "Minimum individual: " << min.vals[0] << ", " << min.vals[1] << ", " << min.vals[2] << std::endl;
     DebugLogger::ss << "Maximum individual: " << max.vals[0] << ", " << max.vals[1] << ", " << max.vals[2];
     DebugLogger::log();
-    options.minMaxIndividual = std::make_pair(min,max);
+    options.setMinMaxIndividual(std::make_pair(min,max));
     EndCondition econd = [](int gen, double fitness) {
         return gen == 10;
     };
+    Configuration::getInstance().add("EndCondition","generations==10");
     GA ga(options, econd, ibsFitEval);
     ga.run();
 
@@ -92,11 +94,11 @@ void ExpGAIBS::output(std::vector<std::shared_ptr<IBS>> ibses, std::string path)
     //Display::display(m_objects,path+std::string("ibses.blend"),false);
 }
 
-std::string ExpGAIBS::getExpPath(){
-  std::string folderName = std::string(IbsSampleScheme::getSampleSchemeName(m_sampleScheme));
-  if(m_onePass)
-    folderName = "OneVoronoi_"+folderName;
-  return EXPTYPE+std::string("/")+folderName+"/"+m_ID;
+/* std::string ExpGAIBS::getExpPath(){ */
+/*   std::string folderName = std::string(IbsSampleScheme::getSampleSchemeName(m_sampleScheme)); */
+/*   if(m_onePass) */
+/*     folderName = "OneVoronoi_"+folderName; */
+/*   return EXPTYPE+std::string("/")+folderName+"/"+m_ID; */
 
-}
+/* } */
 

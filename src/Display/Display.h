@@ -1,9 +1,9 @@
 #pragma once
 
 #define DISPLAY_PATH "../src/Display/"
-#define TMP_PATH "/tmp/SceneSynthesis/"
-#define OBJ_PATH "objs/"
-#define SCENE_PATH "scene.txt"
+/* #define TMP_PATH "/tmp/SceneSynthesis/" */
+#define OBJ_PATH "/objs/"
+#define SCENE_PATH "/scene.txt"
 
 #include "../Object.h"
 #include <vector>

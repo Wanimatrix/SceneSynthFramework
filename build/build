@@ -1,0 +1,5 @@
+#!/bin/bash
+
+source build.conf
+cmake .. -DEXPS=$SS_EXPERIMENTS -DPERF=$SS_PERFTIMERS -DDEBUG=$SS_DEBUGLOGGER -DSYMBOLS=$SS_DEBUGSYMBOLS && make -j$SS_COMPILEWITHCORES
+# valgrind --leak-check=yes --undef-value-errors=no
