@@ -3,6 +3,7 @@
 #define DISPLAY_PATH "../src/Display/"
 /* #define TMP_PATH "/tmp/SceneSynthesis/" */
 #define OBJ_PATH "/objs/"
+#define SAMPLES_PATH "/samples/"
 #define SCENE_PATH "/scene.txt"
 
 #include "../Object.h"

@@ -16,13 +16,17 @@ bool utilities::doubleEpsDiff(double a, double b, double epsilon)
 
 void utilities::checkPath(std::string path)
 {
+
     bool expPathOk = false;
     DebugLogger::ss << "PATH: " << path;
     DebugLogger::log();
     boost::filesystem::path dir(path);
+    boost::filesystem::remove_all(dir);
     if(!boost::filesystem::exists(dir)) {
         if(boost::filesystem::create_directories(dir))
             expPathOk = true;
     } else
+    {
         expPathOk = true;
+    }
 }

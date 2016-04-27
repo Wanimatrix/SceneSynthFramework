@@ -63,8 +63,6 @@ void Configuration::writeToFile(std::string filePath) const
     outfile.close();
 }
 
-
-
 void Configuration::readFromFile(std::string filePath) 
 {
     std::ifstream infile;

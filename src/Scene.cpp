@@ -15,6 +15,7 @@
 #include <iostream>
 #include <boost/algorithm/string.hpp>
 #include "Debug/DebugTools.h"
+#include "Experiments/Configuration.h"
 
 
 /***********************
@@ -49,15 +50,19 @@ void Scene::samplePoints() {
         totalArea += obj->getMesh().getSurfaceArea();
     }
 
-    int sampleNum = 2000 * m_objects.size();
+    /* int sampleNum = stoi(Configuration::getInstance().get("SampleAmount")) * m_objects.size(); */
     //int sampleNum = 2000 * (totalArea/minArea);
     for (auto obj:m_objects)
     {
-        int num = sampleNum * obj->getMesh().getSurfaceArea() / totalArea;
-        if (num < 1000)
-        {
-            num = 1000;
-        }
+        int num = stoi(Configuration::getInstance().get("SampleAmount"));
+        /* int num = sampleNum * obj->getMesh().getSurfaceArea() / totalArea; */
+        /* if (num < 1000) */
+        /* { */
+        /*     num = 1000; */
+        /* } */
+
+
+
         /*if (obj->isCentral)
         {
             num = num * 2;

@@ -74,6 +74,7 @@ public:
     // importance-based sampling
     double sampleRatio;  // for smaller IBS, the number of samples should be smaller
     std::vector<SamplePoint> samples;
+    std::vector<SamplePoint> savedSamples;
     //starlab::PointSoup sampleRender;
     double maxWeight;
     double totalWeight;

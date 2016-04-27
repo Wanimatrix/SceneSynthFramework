@@ -110,20 +110,24 @@ double IBS::getSimilarity(const IBS &other, bool w, double a, double b, double c
     Eigen::Map<const Eigen::VectorXd> distDiff = (thisDist-otherDist);*/
 
     double l1Pfh = (thisPfh-otherPfh).cwiseAbs().sum();
-    double l1Dist = std::min((thisDir-otherDir).cwiseAbs().sum(),(thisInvertedDir-otherDir).cwiseAbs().sum());
-    double l1Dir = (thisDist-otherDist).cwiseAbs().sum();
+    double l1Dir = std::min((thisDir-otherDir).cwiseAbs().sum(),(thisInvertedDir-otherDir).cwiseAbs().sum());
+    double l1Dist = (thisDist-otherDist).cwiseAbs().sum();
+    /* double l1Dir = thisDist.sum()/(sampleRatio*5000) - thisDist.sum()/(sampleRatio*5000); */
 
     //std::cout << thisPfh.sum() << " " << otherPfh.sum() << std::endl;
 
 
     double geoDist = a * l1Pfh + b * l1Dir + c * l1Dist;
-    DebugLogger::ss << geoDist;
+    DebugLogger::ss << "Similarity between " << ibsObj->getName() << " and " << other.ibsObj->getName() << std::endl;
+    DebugLogger::ss << "Geometric Distance: " << a << "*" << l1Pfh << " + " << b << "*" << l1Dir << " + " << c << "*" << l1Dist << " = " << geoDist;
     DebugLogger::log();
-    DebugLogger::ss << topoSame;
-    DebugLogger::log();
+    /* DebugLogger::ss << geoDist; */
+    /* DebugLogger::log(); */
+    /* DebugLogger::ss << topoSame; */
+    /* DebugLogger::log(); */
     double sim = w ? static_cast<int>(topoSame) * (1 - geoDist) : (1 - geoDist);
-    DebugLogger::ss << sim;
-    DebugLogger::log();
+    /* DebugLogger::ss << sim; */
+    /* DebugLogger::log(); */
     return sim;
 }
 
@@ -288,6 +292,9 @@ void IBS::sampling( int num )
 
     Sampler s(ibsObj->getMesh(), RANDOM_BARYCENTRIC_WEIGHTED);
     samples = s.getSamples(num);
+    std::vector<SamplePoint> currentSamples = ibsObj->getUniformSamples();
+    currentSamples.insert(currentSamples.end(),samples.begin(),samples.end());
+    ibsObj->setUniformSamples(currentSamples);
     
     /*sampleRender.clear();
     for (auto sample : samples)
@@ -320,6 +327,8 @@ void IBS::computeTopoFeatures()
 void IBS::computePFH()
 {
     // sample points (using importance sampling)
+    DebugLogger::ss << "SampleRatio: " << sampleRatio;
+    DebugLogger::log();
     int sampleNum = 1000 * sampleRatio;
     sampling(sampleNum);
 
@@ -360,6 +369,8 @@ void IBS::computePFH()
 
 void IBS::computeDirHist()
 {
+    DebugLogger::ss << "SampleRatio: " << sampleRatio;
+    DebugLogger::log();
     int sampleNum = 5000 * sampleRatio;
     sampling(sampleNum);
 
@@ -407,6 +418,8 @@ void IBS::computeDirHist()
 
 void IBS::computeDistHist()
 {
+    DebugLogger::ss << "SampleRatio: " << sampleRatio;
+    DebugLogger::log();
     int sampleNum = 5000 * sampleRatio;
     sampling(sampleNum);
 

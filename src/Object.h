@@ -62,6 +62,8 @@ public:
     virtual double getNonUniformSampleDensity(std::shared_ptr<Object> objPtr) const {return m_nonUniformSampleDensity.at(objPtr);}
     virtual std::vector<SamplePoint> getUniformSamples() const {return m_uniformSamples;}
     virtual std::vector<SamplePoint> getNonUniformSamples(std::shared_ptr<Object> objPtr) const {return m_nonUniformSamples.at(objPtr);}
+    virtual std::map<std::shared_ptr<Object>,std::vector<SamplePoint>>::const_iterator getNonUniformSamplesIterator() const {return m_nonUniformSamples.begin();}
+    virtual int getNonUniformSamplesAmount() const {return m_nonUniformSamples.size();}
     virtual void removeNonUniformSample(std::shared_ptr<Object> objPtr) 
     {
         m_nonUniformSamples.erase(objPtr);
@@ -99,6 +101,8 @@ public:
 
     // SETTERS
     virtual void setName(std::string newName) {m_name = newName;}
+    virtual void setUniformSamples(std::vector<SamplePoint> &newUniformSamples) {m_uniformSamples = newUniformSamples;}
+
 private:
     // INIT
     virtual Mesh init(const aiMesh *t_mesh, std::stack<Transformation> transformationStack, const std::string &t_name);
