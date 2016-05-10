@@ -10,6 +10,7 @@
 #include <CGAL/convex_hull_3.h>
 #include <CGAL/Triangulation_cell_base_with_info_3.h>
 #include <CGAL/Triangulation_vertex_base_with_info_3.h>
+#include <CGAL/intersections.h>
 #include <Eigen/Dense>
 
 typedef struct CellInfo {
@@ -33,6 +34,10 @@ typedef CGAL::Cartesian_converter<Kd,K> Kd_to_K;
 typedef Kd::Point_3 Point3d;
 typedef CGAL::Surface_mesh<Point3d> Mesh3d;
 typedef Kd::Vector_3 Vector3d;
+typedef CGAL::Ray_3<Kd> Ray3d;
+typedef CGAL::Triangle_3<Kd> Triangle3d;
+typedef CGAL::Segment_3<Kd> Segment3d;
+typedef Kd::Intersect_3 Intersect3d;
 typedef CGAL::Bbox_3 Bbox3d;
 typedef CGAL::Polyhedron_3<Kd> Poly3d;
 typedef CGAL::Iso_cuboid_3<Kd> IsoCub3d;

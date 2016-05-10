@@ -116,7 +116,7 @@ std::vector<std::shared_ptr<IBS>> ExpIBSSim::computeIBSBetweenTwoSets(std::vecto
             timer.start();
             if(m_sampleScheme == IbsSampleScheme::SampleScheme::IMPORTANCE_DISTANCE) {
               //assert(objs1.size()+objs2.size() <= 2);
-              objs1[i]->sampleNonUniform(objs1[i]->getUniformSamples().size(),objs2[j]);
+              /* objs1[i]->sampleNonUniform(objs1[i]->getUniformSamples().size(),objs2[j]); */
               objs2[j]->sampleNonUniform(objs2[j]->getUniformSamples().size(),objs1[i]);
             }
             if(m_sampleScheme == IbsSampleScheme::SampleScheme::IMPORTANCE_DISTANCE_HULLAPPROX) objs1[i]->sampleNonUniform(objs1[i]->getUniformSamples().size(),objs2[j],true);

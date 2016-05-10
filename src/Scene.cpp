@@ -55,6 +55,7 @@ void Scene::samplePoints() {
     for (auto obj:m_objects)
     {
         int num = stoi(Configuration::getInstance().get("SampleAmount"));
+        /* if(Configuration::getInstance().get("SampleScheme") == "importance_distance") num /= 2; */
         /* int num = sampleNum * obj->getMesh().getSurfaceArea() / totalArea; */
         /* if (num < 1000) */
         /* { */

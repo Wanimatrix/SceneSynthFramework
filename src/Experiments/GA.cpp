@@ -1,57 +1,8 @@
 #include "GA.h"
 #include "../Debug/DebugTools.h"
-#include <random>
 #include <algorithm>
+#include "../Utilities/Utilities.h"
 
-double GA::uniformDouble(double min, double max) 
-{
-    std::random_device m_rseed;
-    std::mt19937 rgen(m_rseed());
-    std::uniform_real_distribution<double> ddist(min,max);
-    return ddist(rgen);
-}
-
-double GA::normalDouble(double mean, double variance) 
-{
-    std::random_device m_rseed;
-    std::mt19937 rgen(m_rseed());
-    std::normal_distribution<double> ddist(mean,variance);
-    return ddist(rgen);
-}
-
-std::vector<double> GA::uniformDoubleVector(int amount, double min, double max) 
-{
-    std::random_device m_rseed;
-    std::vector<double> result;
-    result.reserve(amount);
-    std::mt19937 rgen(m_rseed());
-    std::uniform_real_distribution<double> ddist(min,max);
-    while(result.size() < amount) {
-        result.push_back(ddist(rgen));
-    }
-    return result;
-}
-
-int GA::uniformInt(int min, int max) 
-{
-    std::random_device m_rseed;
-    std::mt19937 rgen(m_rseed());
-    std::uniform_int_distribution<int> ddist(min,max);
-    return ddist(rgen);
-}
-
-std::vector<int> GA::uniformIntVector(int amount, int min, int max) 
-{
-    std::random_device m_rseed;
-    std::vector<int> result;
-    result.reserve(amount);
-    std::mt19937 rgen(m_rseed());
-    std::uniform_int_distribution<int> ddist(min,max);
-    while(result.size() < amount) {
-        result.push_back(ddist(rgen));
-    }
-    return result;
-}
 
 bool GA::validateNewIndividual(Individual newIndividual)
 {
@@ -69,7 +20,7 @@ void GA::createPopulation(int count, Individual min, Individual max)
         do
         {
             for(int i = 0; i < sizeof(ind.vals)/sizeof(ind.vals[0]); i++) {
-                ind.vals[i] = GA::uniformDouble(min.vals[i], max.vals[i]);
+                ind.vals[i] = utilities::uniformDouble(min.vals[i], max.vals[i]);
             }
         } while (!validateNewIndividual(ind));
         std::ostringstream oss;
@@ -133,11 +84,11 @@ double GA::grade()
 
 int GA::tournamentSelection()
 {
-    int winnerIdx = GA::uniformInt(0,m_population.size()-1);
+    int winnerIdx = utilities::uniformInt(0,m_population.size()-1);
     double winnerFitness = GA::fitness(winnerIdx).first;
     for(int i = 1; i < m_options.getTournamentSize(); i++)
     {
-        int newIdx = GA::uniformInt(0,m_population.size()-1);
+        int newIdx = utilities::uniformInt(0,m_population.size()-1);
         double newFitness = GA::fitness(newIdx).first;
         if(newFitness > winnerFitness)
         {
@@ -166,14 +117,14 @@ int GA::tournamentSelection()
 
 Individual GA::spatialCrossover(Individual male, Individual female)
 {
-    double t = GA::uniformDouble(0,1);
+    double t = utilities::uniformDouble(0,1);
     double parentDiff[] = {std::abs(male.vals[0]-female.vals[0]),std::abs(male.vals[1]-female.vals[1]),std::abs(male.vals[2]-female.vals[2])};
     double sphereCenter[] = {male.vals[0]+t*parentDiff[0],male.vals[1]+t*parentDiff[1],male.vals[2]+t*parentDiff[2]};
-    double X1 = GA::normalDouble(0,1);
-    double X2 = GA::normalDouble(0,1);
-    double X3 = GA::normalDouble(0,1);
+    double X1 = utilities::normalDouble(0,1);
+    double X2 = utilities::normalDouble(0,1);
+    double X3 = utilities::normalDouble(0,1);
     double radius = m_options.getCrossoverRadius();
-    double distance = m_options.getCrossoverRadius() * std::pow(GA::uniformDouble(0,1),1.0/3.0);
+    double distance = m_options.getCrossoverRadius() * std::pow(utilities::uniformDouble(0,1),1.0/3.0);
     double factor = distance/std::sqrt(X1*X1 + X2*X2 + X3*X3);
     Individual newIndividual;
     newIndividual.vals[0] = sphereCenter[0]+(factor*X1);
@@ -188,9 +139,9 @@ Individual GA::mutate(Individual ind)
     Individual mutated = ind;
     for(int g = 0; g < sizeof(ind.vals)/sizeof(*ind.vals); g++)
     {
-        if(GA::uniformDouble(0,1) <= m_options.getMutationRate())
+        if(utilities::uniformDouble(0,1) <= m_options.getMutationRate())
         {
-            double gene = GA::uniformDouble(m_options.getMinMaxIndividual().first.vals[g],m_options.getMinMaxIndividual().second.vals[g]);
+            double gene = utilities::uniformDouble(m_options.getMinMaxIndividual().first.vals[g],m_options.getMinMaxIndividual().second.vals[g]);
             ind.vals[g] = gene;
         }
     }

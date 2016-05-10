@@ -110,9 +110,9 @@ double IBS::getSimilarity(const IBS &other, bool w, double a, double b, double c
     Eigen::Map<const Eigen::VectorXd> distDiff = (thisDist-otherDist);*/
 
     double l1Pfh = (thisPfh-otherPfh).cwiseAbs().sum();
-    double l1Dir = std::min((thisDir-otherDir).cwiseAbs().sum(),(thisInvertedDir-otherDir).cwiseAbs().sum());
+    /* double l1Dir = std::min((thisDir-otherDir).cwiseAbs().sum(),(thisInvertedDir-otherDir).cwiseAbs().sum()); */
+    double l1Dir = std::min((thisDir.sum()-otherDir.sum())/(sampleRatio*5000),(thisInvertedDir.sum()-otherDir.sum())/(sampleRatio*5000));
     double l1Dist = (thisDist-otherDist).cwiseAbs().sum();
-    /* double l1Dir = thisDist.sum()/(sampleRatio*5000) - thisDist.sum()/(sampleRatio*5000); */
 
     //std::cout << thisPfh.sum() << " " << otherPfh.sum() << std::endl;
 

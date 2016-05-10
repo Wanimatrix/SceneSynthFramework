@@ -28,7 +28,7 @@
     //Eigen::MatrixXi faces = Eigen::MatrixXi(0,3);
 //} EigenMesh;
 
-class Object
+class Object : public std::enable_shared_from_this<Object>
 {
     friend class Mesh;
 private:
@@ -48,6 +48,7 @@ public:
     // SAMPLING
     virtual void sampleUniform(int num);
     virtual void sampleNonUniform(int num, std::shared_ptr<Object> other, bool convexHullApprox = false);
+    virtual void sampleNonUniformRays(int num, std::shared_ptr<Object> other);
 
     // INTERSECTION TEST
     virtual bool intersects(std::shared_ptr<Object> other);
@@ -75,9 +76,9 @@ public:
       if(m_nonUniformSamples.find(objPtr) != m_nonUniformSamples.end() && m_nonUniformSamples.at(objPtr).size() > 0) 
       {
         std::vector<SamplePoint> result;
-        result.reserve(m_nonUniformSamples.at(objPtr).size() + m_uniformSamples.size());
+        result.reserve(m_nonUniformSamples.at(objPtr).size() /*+ m_uniformSamples.size()*/);
         result.insert(result.end(),m_nonUniformSamples.at(objPtr).begin(),m_nonUniformSamples.at(objPtr).end());
-        result.insert(result.end(),m_uniformSamples.begin(),m_uniformSamples.end());
+        /* result.insert(result.end(),m_uniformSamples.begin(),m_uniformSamples.end()); */
         return result; 
       } 
       else 
@@ -85,6 +86,17 @@ public:
         return m_uniformSamples;
       }
     }
+    /* virtual std::vector<SamplePoint> getAllActiveSamples() const */ 
+    /* { */
+    /*     std::vector<SamplePoint> result; */
+    /*     result.insert(result.end(),m_uniformSamples.begin(),m_uniformSamples.end()); */
+    /*     for(std::pair<std::shared_ptr<Object>, std::vector<SamplePoint>> pair : m_nonUniformSamples) */ 
+    /*     { */
+    /*         if(pair.second.size() > 0) */
+    /*             result.insert(result.end(),pair.second.begin(), pair.second.end()); */
+    /*     } */
+    /*     return result; */
+    /* } */
     virtual double getActiveSampleDensity(std::shared_ptr<Object> objPtr) const 
     {
         if(m_nonUniformSamples.at(objPtr).size() > 0) 
@@ -102,6 +114,18 @@ public:
     // SETTERS
     virtual void setName(std::string newName) {m_name = newName;}
     virtual void setUniformSamples(std::vector<SamplePoint> &newUniformSamples) {m_uniformSamples = newUniformSamples;}
+    virtual void appendNonUniformSamples(std::vector<SamplePoint> &newNonUniformSamples, std::shared_ptr<Object> objPtr) 
+    {
+        if(m_nonUniformSamples.find(objPtr) != m_nonUniformSamples.end())
+        {
+            std::vector<SamplePoint> tmp = m_nonUniformSamples[objPtr];
+            tmp.insert(tmp.end(),newNonUniformSamples.begin(),newNonUniformSamples.end());
+            m_nonUniformSamples[objPtr] = tmp;
+        }
+        else {
+            m_nonUniformSamples[objPtr] = newNonUniformSamples;
+        }
+    }
 
 private:
     // INIT

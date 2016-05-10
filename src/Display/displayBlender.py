@@ -50,10 +50,61 @@ for area in bpy.context.screen.areas:
 
 objSamplesColor = bpy.data.materials['ObjectSampleColor']
 ibsSamplesColor = bpy.data.materials['IBSSampleColor']
+rayPtsColor = bpy.data.materials['RayPtsColor']
 bpy.ops.object.select_all(action='DESELECT')
 # bpy.ops.mesh.primitive_cube_add(radius=0.05)#primitive_uv_sphere_add(size=0.05,segments=6,ring_count=4)
 # sphere = bpy.context.object
 # sphere.data.materials.append(objSamplesColor)
+
+# for fn in os.listdir(os.environ["SCENE_PATH"]+"/raypoints/"):
+#     print("Generating sampleset from file "+fn)
+#     f = open(os.environ["SCENE_PATH"]+"/raypoints/"+fn, 'r')
+#     sampleIdx = 0
+#     # bpy.ops.mesh.primitive_cube_add(radius=0.05)
+#     bpy.ops.mesh.primitive_uv_sphere_add(size=0.01,segments=6,ring_count=4)
+#     sphere = bpy.context.object
+#     sphere.data.materials.append(rayPtsColor)
+#     bpy.ops.object.select_all(action='DESELECT')
+#     # grp = bpy.data.groups.new(fn)
+#     # bpy.ops.object.add(type='EMPTY')
+#     # bpy.context.object.name = fn
+#     # prnt = bpy.context.object
+#     theObj = 0
+#     for line in f:
+#         # print("Sample "+str(sampleIdx))
+#         pos = line.split(",")
+#         # now = time.time()
+#         ob = sphere.copy()
+#         # print("Copying takes "+str(time.time()-now)+" sec")
+#         ob.location.x = float(pos[0])
+#         ob.location.y = -float(pos[2])
+#         ob.location.z = float(pos[1])
+#         # now = time.time()
+#         # ob.data = sphere.data.copy()
+#         # print("Data copying takes "+str(time.time()-now)+" sec")
+#         bpy.context.scene.objects.link(ob)
+#         # bpy.ops.mesh.primitive_ico_sphere_add(size=0.1,location=(float(pos[0]),float(pos[1]),float(pos[2])))
+#         objName = fn[0:-5]+"_"+str(sampleIdx)
+#         ob.name = objName
+#         # grp.objects.link(ob)
+#         # ob.hide = True
+#         # ob.parent = prnt
+#         ob.select = True
+#         bpy.context.scene.objects.active = ob
+#         # if "ibs" in objName:
+#         #     ob.data.materials.append(ibsSamplesColor)
+#         # else:
+#         #     ob.data.materials.append(objSamplesColor)
+#         sampleIdx+=1
+#     # bpy.context.scene.objects.active = prnt
+#     bpy.ops.object.join()
+#     bpy.context.object.name = fn
+#     bpy.ops.object.select_all(action='DESELECT')
+#     sphere.select = True
+#     bpy.ops.object.delete()
+#     f.close()
+
+# bpy.ops.object.select_all(action='DESELECT')
 
 for fn in os.listdir(os.environ["SCENE_PATH"]+"/samples/"):
     print("Generating sampleset from file "+fn)

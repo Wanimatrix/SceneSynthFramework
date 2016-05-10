@@ -53,8 +53,19 @@ void write::writeSamplesToFile(std::vector<SamplePoint>& samples, const std::str
         file.close();
 }
 
+void write::writePointsToFile(std::vector<Point3d>& points, const std::string &fp)
+{
+        std::ofstream file(fp, std::ofstream::trunc);
+        for (Point3d pt : points)
+        {
+            file << pt.x() << "," << pt.y() << "," << pt.z() << std::endl;
+        }
+        file.close();
+}
+
 void write::writeSamples(const Object &obj, const std::string &filepath)
 {
+
     if(obj.getNonUniformSamplesAmount() == 0)
     {
         std::string fp = filepath+"usamples_"+obj.getName()+".smpl";
@@ -67,7 +78,7 @@ void write::writeSamples(const Object &obj, const std::string &filepath)
         for(int i = 0; i < amount; i++)
         {
             std::shared_ptr<Object> otherObj = sampleIterator->first;
-            std::vector<SamplePoint> samplePoints = sampleIterator->second;
+            std::vector<SamplePoint> samplePoints = obj.getActiveSamples(otherObj);
             std::string fp = filepath+"nusamples_"+obj.getName()+"_"+otherObj->getName()+".smpl";
             writeSamplesToFile(samplePoints,fp);
             sampleIterator++;
