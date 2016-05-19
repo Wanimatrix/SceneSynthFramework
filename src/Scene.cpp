@@ -15,7 +15,7 @@
 #include <iostream>
 #include <boost/algorithm/string.hpp>
 #include "Debug/DebugTools.h"
-#include "Experiments/Configuration.h"
+#include "Experiments/ConfigurationController.h"
 
 
 /***********************
@@ -50,12 +50,15 @@ void Scene::samplePoints() {
         totalArea += obj->getMesh().getSurfaceArea();
     }
 
-    /* int sampleNum = stoi(Configuration::getInstance().get("SampleAmount")) * m_objects.size(); */
+    /* int sampleNum = stoi(ConfigurationController::getInstance().getCurrentConfiguration().get("SampleAmount")) * m_objects.size(); */
     //int sampleNum = 2000 * (totalArea/minArea);
+    int minSampleAmount = std::stoi(ConfigurationController::getInstance().getCurrentConfiguration().get("SampleAmount"));
     for (auto obj:m_objects)
     {
-        int num = stoi(Configuration::getInstance().get("SampleAmount"));
-        /* if(Configuration::getInstance().get("SampleScheme") == "importance_distance") num /= 2; */
+        int num = std::stoi(ConfigurationController::getInstance().getCurrentConfiguration().get("SampleAmount"));
+        /* obj->setAmountRaySamples(std::min(minSampleAmount * (obj->getMesh().getSurfaceArea()/minArea), minSampleAmount*10.0)); */
+        obj->setAmountRaySamples(num);
+        /* if(ConfigurationController::getInstance().getCurrentConfiguration().get("SampleScheme") == "importance_distance") num /= 2; */
         /* int num = sampleNum * obj->getMesh().getSurfaceArea() / totalArea; */
         /* if (num < 1000) */
         /* { */

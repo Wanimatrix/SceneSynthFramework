@@ -6,6 +6,7 @@ Hu, Ruizhen, et al. "Interaction Context (ICON): Towards a Geometric Functionali
 
 #include "IBS.h"
 #include "../Debug/DebugTools.h"
+#include "../Experiments/ConfigurationController.h"
 // #include "Scene.h"
 //#include "QuickMeshDraw.h"
 //#include "RenderObjectExt.h"
@@ -291,6 +292,9 @@ void IBS::sampling( int num )
     computeSampleWeightForTri();
 
     Sampler s(ibsObj->getMesh(), RANDOM_BARYCENTRIC_WEIGHTED);
+    if (ConfigurationController::getInstance().getCurrentConfiguration().exists("IBSSampling") && ConfigurationController::getInstance().getCurrentConfiguration().get("IBSSampling") == "uniform")
+        s = Sampler(ibsObj->getMesh());
+
     samples = s.getSamples(num);
     std::vector<SamplePoint> currentSamples = ibsObj->getUniformSamples();
     currentSamples.insert(currentSamples.end(),samples.begin(),samples.end());

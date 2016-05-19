@@ -49,6 +49,7 @@ public:
     virtual void sampleUniform(int num);
     virtual void sampleNonUniform(int num, std::shared_ptr<Object> other, bool convexHullApprox = false);
     virtual void sampleNonUniformRays(int num, std::shared_ptr<Object> other);
+    virtual void sampleNonUniformRays2(int num, std::shared_ptr<Object> other);
 
     // INTERSECTION TEST
     virtual bool intersects(std::shared_ptr<Object> other);
@@ -65,6 +66,7 @@ public:
     virtual std::vector<SamplePoint> getNonUniformSamples(std::shared_ptr<Object> objPtr) const {return m_nonUniformSamples.at(objPtr);}
     virtual std::map<std::shared_ptr<Object>,std::vector<SamplePoint>>::const_iterator getNonUniformSamplesIterator() const {return m_nonUniformSamples.begin();}
     virtual int getNonUniformSamplesAmount() const {return m_nonUniformSamples.size();}
+    virtual int getAmountRaySamples() {return m_amountRaySamples;}
     virtual void removeNonUniformSample(std::shared_ptr<Object> objPtr) 
     {
         m_nonUniformSamples.erase(objPtr);
@@ -113,6 +115,7 @@ public:
 
     // SETTERS
     virtual void setName(std::string newName) {m_name = newName;}
+    virtual void setAmountRaySamples(int num) {m_amountRaySamples = num;}
     virtual void setUniformSamples(std::vector<SamplePoint> &newUniformSamples) {m_uniformSamples = newUniformSamples;}
     virtual void appendNonUniformSamples(std::vector<SamplePoint> &newNonUniformSamples, std::shared_ptr<Object> objPtr) 
     {
@@ -154,5 +157,6 @@ private:
     std::map<std::shared_ptr<Object>,double> m_nonUniformSampleDensity;
     std::vector<SamplePoint> m_uniformSamples;
     std::map<std::shared_ptr<Object>,std::vector<SamplePoint>> m_nonUniformSamples;
+    int m_amountRaySamples;
     //std::map<std::shared_ptr<Object>,std::vector<SamplePoint>> nonUniformSamples;
 };

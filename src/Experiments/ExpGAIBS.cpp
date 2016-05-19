@@ -6,7 +6,7 @@
 #include "../Display/Display.h"
 #include "GA.h"
 #include "IBSFitEval.h"
-#include "Configuration.h"
+#include "ConfigurationController.h"
 
 /* #define EXPTYPE "ga" */
 
@@ -45,7 +45,7 @@ std::vector<std::shared_ptr<IBS>> ExpGAIBS::compute(std::pair<std::vector<std::s
     IBSFitEval ibsFitEval(ibses, newScene, sets.first[0]->getMesh(), m_sampleScheme);
     GAOptions options = GAOptions::loadFromConfig();
     options.setPopulationSize(20);
-    options.setOutputPath(Configuration::getInstance().get("ExperimentRunPath"));
+    options.setOutputPath(ConfigurationController::getInstance().getCurrentConfiguration().get("ExperimentRunPath"));
     std::vector<Object> sceneObjects;
     DebugLogger::ss << "Scene objects: " << newScene.getObjects().size() << std::endl;
     for(std::shared_ptr<Object> objPtr : newScene.getObjects()) {
@@ -76,7 +76,7 @@ std::vector<std::shared_ptr<IBS>> ExpGAIBS::compute(std::pair<std::vector<std::s
     EndCondition econd = [](int gen, double fitness) {
         return gen == 10;
     };
-    Configuration::getInstance().add("EndCondition","generations==10");
+    ConfigurationController::getInstance().getCurrentConfiguration().add("EndCondition","generations==10");
     GA ga(options, econd, ibsFitEval);
     ga.run();
 

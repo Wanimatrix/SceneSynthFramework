@@ -91,6 +91,7 @@ set ( LIB_DIR ${CMAKE_SOURCE_DIR}/../libs)
     include_directories ( ${GPIOS_DIR} )
     list ( APPEND LIBRARY_LINKS_LST mpfr gmp boost_thread boost_iostreams boost_system boost_filesystem util )
     
+    list ( APPEND LIBRARY_LINKS_LST boost_regex )
     ## TBB (For CGAL)
     #set ( TBB_DIR ${LIB_DIR}/tbb42_20140601oss_src/tbb42_20140601oss)
     #include_directories (${TBB_DIR}/include)

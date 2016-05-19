@@ -5,7 +5,7 @@
 #include "write.h"
 #include "../Debug/DebugTools.h"
 #include "../Utilities/Utilities.h"
-#include "../Experiments/Configuration.h"
+#include "../Experiments/ConfigurationController.h"
 #include <boost/algorithm/string.hpp>
 
 #ifdef __CYGWIN__
@@ -16,7 +16,7 @@
 
 void Display::display(const std::vector<std::shared_ptr<Object>> &objects, const std::string &save, bool display) {
     std::cout << "Start displaying ..." << std::endl;
-    std::string tmpPath = Configuration::getInstance().get("ExperimentTmpPath");
+    std::string tmpPath = ConfigurationController::getInstance().getCurrentConfiguration().get("ExperimentTmpPath");
 
     /* utilities::checkPath(tmpPath); */
     utilities::checkPath(tmpPath+OBJ_PATH);

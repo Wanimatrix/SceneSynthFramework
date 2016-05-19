@@ -13,7 +13,8 @@
 #include "../Display/Display.h"
 #include "../AnalysisPhase/IbsGenerator.h"
 #include "../Debug/DebugTools.h"
-#include "Configuration.h"
+#include "ConfigurationController.h"
+#include "ConfigurationFactory.h"
 #include "Experiment.h"
 #include "ExpIBSSim.h"
 #include "ExpGAIBS.h"
@@ -105,7 +106,7 @@ typedef std::vector<std::string> SceneList;
 /*             pi.sampleScheme = IbsSampleScheme::getSampleScheme(uppercSampleName); */
 /*             DebugLogger::ss << "Chosen sampleScheme: " << IbsSampleScheme::getSampleSchemeName(pi.sampleScheme); */
 /*             DebugLogger::log(); */
-/*             Configuration::getInstance().add("SampleMethod",IbsSampleScheme::getSampleSchemeName(pi.sampleScheme)); */
+/*             ConfigurationController::getInstance().getCurrentConfiguration().add("SampleMethod",IbsSampleScheme::getSampleSchemeName(pi.sampleScheme)); */
 /*         } else if (flag == "-n") */
 /*         { */
 /*             pi.executionAmount = atoi(argv[++i]); */
@@ -125,17 +126,17 @@ typedef std::vector<std::string> SceneList;
 /*     } */
 
 /*     // Record input configurations into configurations object */
-/*     Configuration::getInstance().add("SampleMethod",IbsSampleScheme::getSampleSchemeName(pi.sampleScheme)); */
-/*     Configuration::getInstance().add("NbExecutions",pi.executionAmount); */
-/*     Configuration::getInstance().add("CentralObject",pi.centralObj); */
-/*     Configuration::getInstance().add("OneVoronoi",pi.onePass); */
-/*     Configuration::getInstance().add("ExperimentId",pi.expId); */
+/*     ConfigurationController::getInstance().getCurrentConfiguration().add("SampleMethod",IbsSampleScheme::getSampleSchemeName(pi.sampleScheme)); */
+/*     ConfigurationController::getInstance().getCurrentConfiguration().add("NbExecutions",pi.executionAmount); */
+/*     ConfigurationController::getInstance().getCurrentConfiguration().add("CentralObject",pi.centralObj); */
+/*     ConfigurationController::getInstance().getCurrentConfiguration().add("OneVoronoi",pi.onePass); */
+/*     ConfigurationController::getInstance().getCurrentConfiguration().add("ExperimentId",pi.expId); */
 /*     std::ostringstream inSceneStream; */
 /*     for(std::string inSceneName : pi.inputScenes) */
 /*     { */
 /*         inSceneStream << inSceneName << ","; */
 /*     } */
-/*     Configuration::getInstance().add("InputScenes",inSceneStream); */
+/*     ConfigurationController::getInstance().getCurrentConfiguration().add("InputScenes",inSceneStream); */
 
 /*     // Check if required parameters were given */
 /*     assert(pi.inputScenes.size() > 0); */
@@ -178,63 +179,70 @@ int main(int argc, const char* argv[]) {
     std::cout << "Starting experiment..." << std::endl;
 
     // Read configuration from file
-    Configuration::getInstance().readFromFile(argv[1]);
+    /* ConfigurationController::getInstance().getCurrentConfiguration().readFromFile(argv[1]); */
+    ConfigurationController::getInstance().setConfigurations(ConfigurationFactory::readConfigurations(argv[1]));
+    ConfigurationController::getInstance().addToAll("ExperimentTmpPath","/tmp/SceneSynthesis/");
 
-    /* ParsedInfo pi = parse(argc, argv); */
-    DebugLogger::ss << "Loading scenes ...";
-    DebugLogger::log();
-    std::vector<std::string> inputScenes;
-    std::string inputScenesStr = Configuration::getInstance().get("InputScenes");
-    boost::split(inputScenes, inputScenesStr, boost::is_any_of(","));
-    input = loadScenes(inputScenes);
-    DebugLogger::ss << "Scenes loaded";
-    DebugLogger::log();
-    
-    std::string timestamp = getTimestamp();
-
-    DebugLogger::ss << "Times executing: " << Configuration::getInstance().get("NbExecutions");
-    DebugLogger::log();
-
-    std::string expType = Configuration::getInstance().get("ExperimentType");
-    bool oneVoronoi = (Configuration::getInstance().get("OneVoronoi") == "1");
-    IbsSampleScheme::SampleScheme ss = IbsSampleScheme::getSampleScheme(Configuration::getInstance().get("SampleScheme"));
-    std::string expId = Configuration::getInstance().get("ExperimentId");
-    std::string centralObj = Configuration::getInstance().get("CentralObject");
-    std::ostringstream oss;
-    oss << EXP_PATH << "/" << expType << "/" << expId << "/" << timestamp << "/";
-    Configuration::getInstance().add("ExperimentBasePath",oss.str());
-    Configuration::getInstance().add("ExperimentTmpPath","/tmp/SceneSynthesis/");
-    for (int i = 0; i < std::stoi(Configuration::getInstance().get("NbExecutions")); i++)
+    do
     {
-        std::ostringstream ossExtended;
-        ossExtended << oss.str() << i << "/";
-        Configuration::getInstance().set("ExperimentRunPath",ossExtended.str());
-        if (expType == "ibssimilarity")
+
+        std::string expName = ConfigurationController::getInstance().getCurrentConfiguration().getName();
+        std::string timestamp = getTimestamp();
+        std::ostringstream oss;
+        oss << EXP_PATH << "/" << expName << "/" << timestamp << "/";
+        ConfigurationController::getInstance().getCurrentConfiguration().add("ExperimentBasePath",oss.str());
+
+        /* ParsedInfo pi = parse(argc, argv); */
+        DebugLogger::ss << "Loading scenes ...";
+        DebugLogger::log();
+        std::vector<std::string> inputScenes;
+        std::string inputScenesStr = ConfigurationController::getInstance().getCurrentConfiguration().get("InputScenes");
+        boost::split(inputScenes, inputScenesStr, boost::is_any_of(","));
+        input = loadScenes(inputScenes);
+        DebugLogger::ss << "Scenes loaded";
+        DebugLogger::log();
+     
+
+        DebugLogger::ss << "Times executing: " << ConfigurationController::getInstance().getCurrentConfiguration().get("NbExecutions");
+        DebugLogger::log();
+
+        bool oneVoronoi = (ConfigurationController::getInstance().getCurrentConfiguration().get("OneVoronoi") == "1");
+        std::string expType = ConfigurationController::getInstance().getCurrentConfiguration().get("ExperimentType");
+        IbsSampleScheme::SampleScheme ss = IbsSampleScheme::getSampleScheme(ConfigurationController::getInstance().getCurrentConfiguration().get("SampleScheme"));
+        std::string centralObj = ConfigurationController::getInstance().getCurrentConfiguration().get("CentralObject");
+        for (int i = 0; i < std::stoi(ConfigurationController::getInstance().getCurrentConfiguration().get("NbExecutions")); i++)
         {
-            Experiment *IBSSimilarityExperiments = new ExpIBSSim(ss, oneVoronoi, expId);
-            IBSSimilarityExperiments->run(input,centralObj);
-            delete IBSSimilarityExperiments;
-        } else if (expType == "ibspdf")
-        {
-            Experiment *IBSSimPDFExperiment = new ExpIBSPDF(ss,oneVoronoi,expId);
-            IBSSimPDFExperiment->run(input,centralObj);
-            delete IBSSimPDFExperiment;
-        } else if (expType == "ibsga")
-        {
-            Experiment *gaExperiment = new ExpGAIBS(ss,oneVoronoi, expId);
-            gaExperiment->run(input,centralObj);
-            delete gaExperiment;
-        } else {
-            std::cerr << "Invalid ExperimentType";
+            std::ostringstream ossExtended;
+            ossExtended << oss.str() << i << "/";
+            ConfigurationController::getInstance().getCurrentConfiguration().set("ExperimentRunPath",ossExtended.str());
+            if (expType == "ibssimilarity")
+            {
+                Experiment *IBSSimilarityExperiments = new ExpIBSSim(ss, oneVoronoi, expName);
+                IBSSimilarityExperiments->run(input,centralObj);
+                delete IBSSimilarityExperiments;
+            } else if (expType == "ibspdf")
+            {
+                Experiment *IBSSimPDFExperiment = new ExpIBSPDF(ss,oneVoronoi,expName);
+                IBSSimPDFExperiment->run(input,centralObj);
+                delete IBSSimPDFExperiment;
+            } else if (expType == "ibsga")
+            {
+                Experiment *gaExperiment = new ExpGAIBS(ss,oneVoronoi, expName);
+                gaExperiment->run(input,centralObj);
+                delete gaExperiment;
+            } else {
+                std::cerr << "Invalid ExperimentType";
+            }
+        //for (int i = 0; i < 10; i++)
+        //{
+            //Experiment *idExperiment = new ExpIDIBS(pi.sampleScheme,pi.onePass,pi.expId);
+            //idExperiment->run(input,pi.centralObj);
+            //delete idExperiment;
+        //}
         }
-    //for (int i = 0; i < 10; i++)
-    //{
-        //Experiment *idExperiment = new ExpIDIBS(pi.sampleScheme,pi.onePass,pi.expId);
-        //idExperiment->run(input,pi.centralObj);
-        //delete idExperiment;
-    //}
-    }
-    Configuration::getInstance().erase("ExperimentRunPath");
-    Configuration::getInstance().writeToFile(Configuration::getInstance().get("ExperimentBasePath"));
+        ConfigurationController::getInstance().getCurrentConfiguration().erase("ExperimentRunPath");
+        ConfigurationController::getInstance().getCurrentConfiguration().writeToFile(ConfigurationController::getInstance().getCurrentConfiguration().get("ExperimentBasePath"));
+
+    } while(ConfigurationController::getInstance().advanceConfiguration());
 }
 #endif

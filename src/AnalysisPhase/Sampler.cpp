@@ -5,7 +5,7 @@ Hu, Ruizhen, et al. "Interaction Context (ICON): Towards a Geometric Functionali
 */
 
 #include "Sampler.h"
-
+#include "../Utilities/Utilities.h"
 
 Sampler::Sampler(const Mesh &srcMesh, SamplingMethod samplingMethod)
 {
@@ -117,7 +117,8 @@ SamplePoint Sampler::getSample(double weight)
     if( method == RANDOM_BARYCENTRIC_AREA || RANDOM_BARYCENTRIC_WEIGHTED || RANDOM_BARYCENTRIC_WEIGHTED_DISTANCE)
     {
         // r, random point in the area
-        r = uniform();
+        /* r = uniform(); */
+        r = utilities::uniformDouble(0,1);
 
         // Find corresponding face
         std::vector<WeightFace>::iterator it = lower_bound(interval.begin(), interval.end(), WeightFace(std::min(r,interval.back().weight)));

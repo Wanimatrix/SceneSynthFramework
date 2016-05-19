@@ -323,9 +323,7 @@ void Object::sampleNonUniform(int num, std::shared_ptr<Object> other, bool conve
 {
     DebugLogger::ss << "Sampling started.";
     DebugLogger::log();
-    sampleNonUniformRays(num,other);
-    return;
-    
+
     std::vector<Object> objs({*this,*other});
     FaceProperty<double> fweight;
     FaceProperty<Point3d> fpt;
@@ -552,6 +550,47 @@ std::pair<Point3d,int> uniformSampleBbox(Bbox3d bbox, int sideConstraint)
     return std::make_pair(result,side);
 }
 
+/* bool onBbox(Point3d pt, Bbox3d bbox) */
+/* { */
+/*     std::vector<Point2d> bboxVertices; */
+/*     bboxVertices.push_back(Point2d(bbox.xmin(),bbox.zmin())); */
+/*     bboxVertices.push_back(Point2d(bbox.xmax(),bbox.zmin())); */
+/*     bboxVertices.push_back(Point2d(bbox.xmin(),bbox.zmax())); */
+/*     bboxVertices.push_back(Point2d(bbox.xmax(),bbox.zmax())); */
+
+/*     // Calculate bounds for next point */
+/*     std::pair<Point3d,Point3d> bounds; */
+/*     for(int i = 0; i < bboxVertices.size(); i++) */
+/*     { */
+/*         Point2d bboxVertex = bboxVertices[i]; */
+/*         int negCounter = 0; */
+/*         int posCounter = 0; */
+/*         for(int j = 0; j < bboxVertices.size(); j++) */
+/*         { */
+/*             Point2d otherVertex = bboxVertices[j]; */
+/*             double prod = CGAL::cross_product(Vector2d(bboxVertex,pt),Vector2d(otherVertex,pt)); */
+/*             if(prod < 0) negCounter++; */
+/*             if(prod > 0) posCounter++; */
+/*         } */
+/*         if(negCounter == 0) bounds.second = Point3d(bboxVertex.x(), bbox.ymin(), bboxVertex.y()); */
+/*         if(posCounter == 0) bounds.first = Point3d(bboxVertex.x(), bbox.ymin(), bboxVertex.y()); */
+/*     } */
+
+/*     // Translate point bounds to XZ-bounds on bbox */
+    
+
+/*     // Pick new point on bbox within bounds */
+/* } */
+
+/* Point3d Object::getRayTarget(Point3d raySource, std::shared_ptr<Object> other) */
+/* { */
+/*     Bbox3d thisBbox = getBbox(); */
+/*     Bbox3d otherBbox = other->getBbox(); */
+/*     Bbox3d totalBbox = thisBbox+otherBbox; */
+    
+/*     if(raySource.x() >= thisBbox */ 
+/* } */
+
 // IDEA from: [Schmitt2015] A 3D Shape Descriptor based on Depth Complexity
 // and Thickness Histograms;
 void Object::sampleNonUniformRays(int num, std::shared_ptr<Object> other)
@@ -566,20 +605,41 @@ void Object::sampleNonUniformRays(int num, std::shared_ptr<Object> other)
     Bbox3d otherBbox = other->getBbox();
     Bbox3d totalBbox = thisBbox+otherBbox;
 
+    DebugLogger::ss << "This Object: " << shared_from_this() << std::endl;
+    DebugLogger::ss << "Other Object: " << other << std::endl;
+
+    std::shared_ptr<Mesh3d> thisMesh = getMesh().mesh3d;
+    std::shared_ptr<Mesh3d> otherMesh = other->getMesh().mesh3d;
+    Tree thisTree(faces(*thisMesh).first,faces(*thisMesh).second, *thisMesh);
+    Tree otherTree(faces(*otherMesh).first,faces(*otherMesh).second, *otherMesh);
+
     /* DebugLogger::ss << "This bbox: " << thisBbox << std::endl; */
     /* DebugLogger::ss << "Other bbox: " << otherBbox << std::endl; */
     /* DebugLogger::ss << "Total bbox: " << totalBbox << std::endl; */
     /* DebugLogger::log(); */
 
     int j = 0;
+    int bboxTestCounter = 0;
     while (theseSamples.size() < num || otherSamples.size() < num)
     {
         /* DebugLogger::ss << "WHILE " << j++ << "; samplesSize: " << samples.size() << "; NAME " << m_name << std::endl; */
         /* DebugLogger::log(); */
-        std::pair<Point3d,int> sampleResult = uniformSampleBbox(totalBbox, -1);
-        Point3d r_s = sampleResult.first;
-        std::pair<Point3d,int> sampleResultSecond = uniformSampleBbox(totalBbox, sampleResult.second);
-        Point3d r_t = sampleResultSecond.first;
+        // TODO: Make this faster by picking points in such way the ray hits both bboxes.
+        DebugTimer dt;
+        dt.start();
+        std::pair<Point3d,int> sampleResult;
+        std::pair<Point3d,int> sampleResultSecond;
+        Point3d r_s;
+        Point3d r_t;
+        Segment3d seg; 
+        do {
+            sampleResult = uniformSampleBbox(totalBbox, -1);
+            r_s = sampleResult.first;
+            sampleResultSecond = uniformSampleBbox(totalBbox, sampleResult.second);
+            r_t = sampleResultSecond.first;
+            seg = Segment3d(r_s,r_t);
+        } while(!thisTree.do_intersect(seg) || !otherTree.do_intersect(seg));
+        dt.printElapsedTime("Finding source and target");
 
         /* DebugLogger::ss << "Source on side " << sampleResult.second << ": (" << r_s << ")" << std::endl; */
         /* DebugLogger::ss << "Target on side " << sampleResultSecond.second << ": (" << r_t << ")"; */
@@ -589,108 +649,172 @@ void Object::sampleNonUniformRays(int num, std::shared_ptr<Object> other)
         /* DebugLogger::ss << "Ray: " << r; */
         /* DebugLogger::log(); */
         std::vector<std::pair<Point3d,std::shared_ptr<Object>>> intersections;
-        if(intersection(thisBbox,r) && intersection(otherBbox,r))
+        /* bboxTestCounter++; */
+        /* DebugTimer dt; */
+        /* dt.start(); */
+        /* bool res = intersection(thisBbox,r) && intersection(otherBbox,r); */
+        /* dt.printElapsedTime("originalIntersect"); */
+        /* dt.start(); */
+        /* bool res2 = thisTree.do_intersect(seg) && otherTree.do_intersect(seg); */
+        /* dt.printElapsedTime("tree intersection"); */
+        /* DebugLogger::ss << (res ? "true" : "false") + std::string(" == ") + (res2 ? "true" : "false"); */
+        /* DebugLogger::log(); */
+        /* assert(res == res2); */
+        if(thisTree.do_intersect(seg) && otherTree.do_intersect(seg))
         {
-            Mesh3d::Face_range thisFaces = m_mesh.mesh3d->faces();
-            Mesh3d::Face_range otherFaces = other->getMesh().mesh3d->faces();
-            std::shared_ptr<Mesh3d> currMesh = m_mesh.mesh3d;
-            std::shared_ptr<Object> currObject = shared_from_this();
-            int i = 0;
-            for(Mesh3d::Face_range::iterator fit = thisFaces.begin();
-                fit != otherFaces.end(); fit++, i++) 
+            /* DebugLogger::ss << "Bbox tests before hitting both bboxes: " << bboxTestCounter << std::endl; */
+            /* bboxTestCounter = 0; */
+            DebugLogger::ss << "Current amount of samples on this obj: " << theseSamples.size() << std::endl;
+            DebugLogger::ss << "Current amount of samples on other obj: " << otherSamples.size() << std::endl;
+            DebugLogger::log();
+
+            DebugTimer t;
+            t.start();
+            /* DebugTimer t; */
+            /* t.start(); */
+            std::list<Segment_intersection> segIntersectionsThis;
+            std::list<Segment_intersection> segIntersectionsOther;
+            /* DebugLogger::ss << "Calculating intersections for " << getName(); */
+            /* DebugLogger::log(); */
+            thisTree.all_intersections(seg, std::back_inserter(segIntersectionsThis));
+            /* DebugLogger::ss << "Calculating intersections for " << other->getName(); */
+            /* DebugLogger::log(); */
+            otherTree.all_intersections(seg, std::back_inserter(segIntersectionsOther));
+            /* DebugLogger::ss << "Calculating intersections done."; */
+            /* DebugLogger::log(); */
+
+            if(segIntersectionsThis.size() > 0 && segIntersectionsOther.size() > 0)
             {
-                Face f_id = *fit;
-
-                /* DebugLogger::ss << "i: " << i << std::endl; */
-                /* DebugLogger::ss << "Current fid: " << *fit << std::endl; */
-                /* /1* DebugLogger::ss << "This (" << m_name << ") number of faces: " << m_mesh.mesh3d->number_of_faces() << std::endl; *1/ */
-                /* DebugLogger::ss << "Other (" << other->getName() << ") number of faces: " << other->getMesh().mesh3d->number_of_faces() << std::endl; */
-                /* DebugLogger::log(); */
-
-                std::vector<Point3d> faceVertices;
-                BOOST_FOREACH(Vertex vd,vertices_around_face(currMesh->halfedge(f_id), *currMesh))
+                for(Segment_intersection intersection : segIntersectionsThis)
                 {
-                    faceVertices.push_back(currMesh->point(vd));
-                }
-                if(faceVertices.size() == 3)
-                {
-                    /* for (int k = 0; k < 3; k++) */
-                    /* { */
-                    /*     if(std::abs(std::abs(faceVertices[k].x())-1) < 0.00001 ) */
-                    /*         faceVertices[k] = Point3d(faceVertices[k].x() < 0 ? -1 : 1, faceVertices[k].y(), faceVertices[k].z()); */
-                    /*     if(std::abs(std::abs(faceVertices[k].y())-1) < 0.00001 ) */
-                    /*         faceVertices[k] = Point3d(faceVertices[k].x(), faceVertices[k].y() < 0 ? -1 : 1, faceVertices[k].z()); */
-                    /*     if(std::abs(std::abs(faceVertices[k].z())-1) < 0.00001 ) */
-                    /*         faceVertices[k] = Point3d(faceVertices[k].x(), faceVertices[k].y(), faceVertices[k].z() < 0 ? -1 : 1); */
-                    /* } */
-                    Triangle3d t(faceVertices[0], faceVertices[1], faceVertices[2]);
-                    /* DebugLogger::ss << "Triangle Pts: (" << faceVertices[0] << "), (" << faceVertices[1] << "), (" << faceVertices[2] << ")" << std::endl; */
-                    /* DebugLogger::ss << "Triangle area: " << std::sqrt(t.squared_area()) << std::endl; */
-                    /* DebugLogger::log(); */
-                    if(std::sqrt(t.squared_area()) >= 0.000001)
-                    {
-                        auto result = CGAL::intersection(r,t);
-                        if(result)
-                        {
-                            sources.push_back(r_s);
-                            targets.push_back(r_t);
-                            if (const Segment3d* s = boost::get<Segment3d>(&*result)) {
-                                intersections.push_back(std::make_pair(s->source(),currObject));
-                                intersections.push_back(std::make_pair(s->target(),currObject));
-                            } else {
-                                const Point3d* p = boost::get<Point3d >(&*result);
-                                intersections.push_back(std::make_pair(*p,currObject)); 
-                            }
-                        }
-                        else 
-                        {
-                            /* DebugLogger::ss << "No real intersection, triangle: " << t; */
-                            /* DebugLogger::log(); */
-                        }
-                    }
-                    else
-                    {
-                        /* DebugLogger::ss << "Triangle area too small: " << t.squared_area(); */
-                        /* DebugLogger::log(); */
+                    sources.push_back(r_s);
+                    targets.push_back(r_t);
+                    if (const Segment3d* s = boost::get<Segment3d>(&(intersection->first))) {
+                        intersections.push_back(std::make_pair(s->source(),shared_from_this()));
+                        intersections.push_back(std::make_pair(s->target(),shared_from_this()));
+                    } else {
+                        const Point3d* p = boost::get<Point3d >(&(intersection->first));
+                        intersections.push_back(std::make_pair(*p,shared_from_this())); 
                     }
                 }
-                else
+                for(Segment_intersection intersection : segIntersectionsOther)
                 {
-                    /* DebugLogger::ss << "Face has more than 3 vertices"; */
-                    /* DebugLogger::log(); */
+                    sources.push_back(r_s);
+                    targets.push_back(r_t);
+                    if (const Segment3d* s = boost::get<Segment3d>(&(intersection->first))) {
+                        intersections.push_back(std::make_pair(s->source(),other));
+                        intersections.push_back(std::make_pair(s->target(),other));
+                    } else {
+                        const Point3d* p = boost::get<Point3d >(&(intersection->first));
+                        intersections.push_back(std::make_pair(*p,other)); 
+                    }
                 }
-
-                if(i == m_mesh.mesh3d->number_of_faces()-1)
-                {
-                    /* DebugLogger::ss << "Switch to other"; */
-                    /* DebugLogger::log(); */
-                    fit = otherFaces.begin();
-                    fit--;
-                    currMesh = other->getMesh().mesh3d;
-                    currObject = other;
-                }
-
-                /* if((fit >= thisFaces.begin() && fit < thisFaces.end()) || (fit >= otherFaces.begin() && fit < otherFaces.end())) */
-                /*     fit++; */
-                /* if(fit == thisFaces.end()) */
-                /* { */
-                /*     fit = otherFaces.begin(); */
-                /*     currMesh = other->getMesh().mesh3d; */
-                /*     currObject = other; */
-                /* } */
             }
+            t.printElapsedTime("CalculateIntersections");
+            /* t.printElapsedTime("AABB intersection"); */
+
+            /* t.start(); */
+            /* Mesh3d::Face_range thisFaces = m_mesh.mesh3d->faces(); */
+            /* Mesh3d::Face_range otherFaces = other->getMesh().mesh3d->faces(); */
+            /* std::shared_ptr<Mesh3d> currMesh = m_mesh.mesh3d; */
+            /* std::shared_ptr<Object> currObject = shared_from_this(); */
+            /* int i = 0; */
+            /* for(Mesh3d::Face_range::iterator fit = thisFaces.begin(); */
+            /*     fit != otherFaces.end(); fit++, i++) */ 
+            /* { */
+            /*     Face f_id = *fit; */
+
+            /*     /1* DebugLogger::ss << "i: " << i << std::endl; *1/ */
+            /*     /1* DebugLogger::ss << "Current fid: " << *fit << std::endl; *1/ */
+            /*     /1* /2* DebugLogger::ss << "This (" << m_name << ") number of faces: " << m_mesh.mesh3d->number_of_faces() << std::endl; *2/ *1/ */
+            /*     /1* DebugLogger::ss << "Other (" << other->getName() << ") number of faces: " << other->getMesh().mesh3d->number_of_faces() << std::endl; *1/ */
+            /*     /1* DebugLogger::log(); *1/ */
+
+            /*     std::vector<Point3d> faceVertices; */
+            /*     BOOST_FOREACH(Vertex vd,vertices_around_face(currMesh->halfedge(f_id), *currMesh)) */
+            /*     { */
+            /*         faceVertices.push_back(currMesh->point(vd)); */
+            /*     } */
+            /*     if(faceVertices.size() == 3) */
+            /*     { */
+            /*         /1* for (int k = 0; k < 3; k++) *1/ */
+            /*         /1* { *1/ */
+            /*         /1*     if(std::abs(std::abs(faceVertices[k].x())-1) < 0.00001 ) *1/ */
+            /*         /1*         faceVertices[k] = Point3d(faceVertices[k].x() < 0 ? -1 : 1, faceVertices[k].y(), faceVertices[k].z()); *1/ */
+            /*         /1*     if(std::abs(std::abs(faceVertices[k].y())-1) < 0.00001 ) *1/ */
+            /*         /1*         faceVertices[k] = Point3d(faceVertices[k].x(), faceVertices[k].y() < 0 ? -1 : 1, faceVertices[k].z()); *1/ */
+            /*         /1*     if(std::abs(std::abs(faceVertices[k].z())-1) < 0.00001 ) *1/ */
+            /*         /1*         faceVertices[k] = Point3d(faceVertices[k].x(), faceVertices[k].y(), faceVertices[k].z() < 0 ? -1 : 1); *1/ */
+            /*         /1* } *1/ */
+            /*         Triangle3d t(faceVertices[0], faceVertices[1], faceVertices[2]); */
+            /*         /1* DebugLogger::ss << "Triangle Pts: (" << faceVertices[0] << "), (" << faceVertices[1] << "), (" << faceVertices[2] << ")" << std::endl; *1/ */
+            /*         /1* DebugLogger::ss << "Triangle area: " << std::sqrt(t.squared_area()) << std::endl; *1/ */
+            /*         /1* DebugLogger::log(); *1/ */
+            /*         if(std::sqrt(t.squared_area()) >= 0.000001) */
+            /*         { */
+            /*             auto result = CGAL::intersection(r,t); */
+            /*             if(result) */
+            /*             { */
+            /*                 sources.push_back(r_s); */
+            /*                 targets.push_back(r_t); */
+            /*                 if (const Segment3d* s = boost::get<Segment3d>(&*result)) { */
+            /*                     intersections.push_back(std::make_pair(s->source(),currObject)); */
+            /*                     intersections.push_back(std::make_pair(s->target(),currObject)); */
+            /*                 } else { */
+            /*                     const Point3d* p = boost::get<Point3d >(&*result); */
+            /*                     intersections.push_back(std::make_pair(*p,currObject)); */ 
+            /*                 } */
+            /*             } */
+            /*             else */ 
+            /*             { */
+            /*                 /1* DebugLogger::ss << "No real intersection, triangle: " << t; *1/ */
+            /*                 /1* DebugLogger::log(); *1/ */
+            /*             } */
+            /*         } */
+            /*         else */
+            /*         { */
+            /*             /1* DebugLogger::ss << "Triangle area too small: " << t.squared_area(); *1/ */
+            /*             /1* DebugLogger::log(); *1/ */
+            /*         } */
+            /*     } */
+            /*     else */
+            /*     { */
+            /*         /1* DebugLogger::ss << "Face has more than 3 vertices"; *1/ */
+            /*         /1* DebugLogger::log(); *1/ */
+            /*     } */
+
+            /*     if(i == m_mesh.mesh3d->number_of_faces()-1) */
+            /*     { */
+            /*         /1* DebugLogger::ss << "Switch to other"; *1/ */
+            /*         /1* DebugLogger::log(); *1/ */
+            /*         fit = otherFaces.begin(); */
+            /*         fit--; */
+            /*         currMesh = other->getMesh().mesh3d; */
+            /*         currObject = other; */
+            /*     } */
+
+            /*     /1* if((fit >= thisFaces.begin() && fit < thisFaces.end()) || (fit >= otherFaces.begin() && fit < otherFaces.end())) *1/ */
+            /*     /1*     fit++; *1/ */
+            /*     /1* if(fit == thisFaces.end()) *1/ */
+            /*     /1* { *1/ */
+            /*     /1*     fit = otherFaces.begin(); *1/ */
+            /*     /1*     currMesh = other->getMesh().mesh3d; *1/ */
+            /*     /1*     currObject = other; *1/ */
+            /*     /1* } *1/ */
+            /* } */
+            /* t.printElapsedTime("Faceloop intersection"); */
 
             if(intersections.size() > 0)
             {
 
-                /* DebugLogger::ss << "IntersectionSet BEFORE {" << std::endl; */
-                /* for (std::pair<Point3d,std::shared_ptr<Object>> intersect : intersections) */
-                /* { */
-                /*     double t = (intersect.first.x()-r.source().x()) / r.direction().vector().x(); */
-                /*     DebugLogger::ss << "    t: " << t << " on obj: " << intersect.second << std::endl; */
-                /* } */
-                /* DebugLogger::ss << "}" << std::endl; */
-                /* DebugLogger::log(); */
+                DebugLogger::ss << "IntersectionSet BEFORE {" << std::endl;
+                for (std::pair<Point3d,std::shared_ptr<Object>> intersect : intersections)
+                {
+                    double t = (intersect.first.x()-r.source().x()) / r.direction().vector().x();
+                    DebugLogger::ss << "    t: " << t << " on obj: " << intersect.second << " (" << intersect.second->getName() << ")" << std::endl;
+                }
+                DebugLogger::ss << "}" << std::endl;
+                DebugLogger::log();
                 std::sort(intersections.begin(), intersections.end(), [&r] (const std::pair<Point3d,std::shared_ptr<Object>> & a, const std::pair<Point3d,std::shared_ptr<Object>> & b) -> bool            
                         {
                             double ta = (a.first.x()-r.source().x()) / r.direction().vector().x();
@@ -765,4 +889,175 @@ void Object::sampleNonUniformRays(int num, std::shared_ptr<Object> other)
     /* write::writePointsToFile(sources, Configuration::getInstance().get("ExperimentTmpPath")+"/raypoints/sourcePts.pts"); */
     /* write::writePointsToFile(targets, Configuration::getInstance().get("ExperimentTmpPath")+"/raypoints/targetPts.pts"); */
 
+}
+
+// Difference with previous: generate two points uniformly on meshes and calculate intersection points
+void Object::sampleNonUniformRays2(int num, std::shared_ptr<Object> other)
+{
+    int thisNum = m_amountRaySamples;
+    int otherNum = other->getAmountRaySamples();
+
+    std::vector<SamplePoint> theseSamples;
+    std::vector<SamplePoint> otherSamples;
+
+    Bbox3d thisBbox = getBbox();
+    Bbox3d otherBbox = other->getBbox();
+
+    std::vector<Point3d> sources;
+    std::vector<Point3d> targets;
+
+    Sampler thisSampler(m_mesh);
+    Sampler otherSampler(other->getMesh().mesh3d);
+
+    std::shared_ptr<Mesh3d> thisMesh = getMesh().mesh3d;
+    std::shared_ptr<Mesh3d> otherMesh = other->getMesh().mesh3d;
+    Tree thisTree(faces(*thisMesh).first,faces(*thisMesh).second, *thisMesh);
+    Tree otherTree(faces(*otherMesh).first,faces(*otherMesh).second, *otherMesh);
+
+    double maxRayLength = 0;
+    for (int i = 0; i < 8; i++)
+    {
+        Point3d thisBboxVertexCurrent(
+                i < 4 ? thisBbox.xmin() : thisBbox.xmax(), 
+                (i < 2 || (i > 3 && i < 6)) ? thisBbox.ymin() : thisBbox.ymax(),
+                i % 2 == 0 ? thisBbox.zmin() : thisBbox.zmax());
+        for (int j = 0; j < 8; j++)
+        {
+            Point3d otherBboxVertexCurrent(
+                    j < 4 ? otherBbox.xmin() : otherBbox.xmax(), 
+                    (j < 2 || (j > 3 && j < 6)) ? otherBbox.ymin() : otherBbox.ymax(),
+                    j % 2 == 0 ? otherBbox.zmin() : otherBbox.zmax());
+
+            double distance = std::sqrt(CGAL::squared_distance(thisBboxVertexCurrent, otherBboxVertexCurrent));
+            if(distance > maxRayLength)
+            {
+                maxRayLength = distance;
+            }
+        }
+    }
+
+    while (theseSamples.size() < thisNum || otherSamples.size() < otherNum)
+    {
+        Point3d r_s, r_t;
+        double distance = 0;
+
+        /* DebugLogger::ss << "Current amount of samples: this = " << theseSamples.size() << "/" << thisNum << "; other = " << otherSamples.size() << "/" << otherNum; */
+        /* DebugLogger::log(); */
+        
+        /* do */ 
+        /* { */
+            r_s = thisSampler.getSample(0).pos;
+            r_t = otherSampler.getSample(0).pos;
+            /* distance = std::sqrt(CGAL::squared_distance(r_s, r_t)); */
+        /* } while (utilities::uniformDouble(0,1) > std::exp(-(-std::log(0.000001)/maxRayLength)*distance)); */
+        Segment3d seg(r_s,r_t);
+        Ray3d r(r_s,r_t);
+        sources.push_back(r_s);
+        targets.push_back(r_t);
+
+        std::list<Segment_intersection> segIntersectionsThis;
+        std::list<Segment_intersection> segIntersectionsOther;
+        thisTree.all_intersections(seg, std::back_inserter(segIntersectionsThis));
+        otherTree.all_intersections(seg, std::back_inserter(segIntersectionsOther));
+
+        std::vector<std::pair<Point3d,std::shared_ptr<Object>>> intersections;
+
+        if(segIntersectionsThis.size() > 0 && segIntersectionsOther.size() > 0)
+        {
+            for(Segment_intersection intersection : segIntersectionsThis)
+            {
+                if (const Segment3d* s = boost::get<Segment3d>(&(intersection->first))) {
+                    intersections.push_back(std::make_pair(s->source(),shared_from_this()));
+                    intersections.push_back(std::make_pair(s->target(),shared_from_this()));
+                } else {
+                    const Point3d* p = boost::get<Point3d >(&(intersection->first));
+                    intersections.push_back(std::make_pair(*p,shared_from_this())); 
+                }
+            }
+            for(Segment_intersection intersection : segIntersectionsOther)
+            {
+                if (const Segment3d* s = boost::get<Segment3d>(&(intersection->first))) {
+                    intersections.push_back(std::make_pair(s->source(),other));
+                    intersections.push_back(std::make_pair(s->target(),other));
+                } else {
+                    const Point3d* p = boost::get<Point3d >(&(intersection->first));
+                    intersections.push_back(std::make_pair(*p,other)); 
+                }
+            }
+        }
+        
+        
+        if(intersections.size() > 0)
+        {
+
+            /* DebugLogger::ss << "IntersectionSet BEFORE {" << std::endl; */
+            /* for (std::pair<Point3d,std::shared_ptr<Object>> intersect : intersections) */
+            /* { */
+            /*     double t = (intersect.first.x()-r.source().x()) / r.direction().vector().x(); */
+            /*     DebugLogger::ss << "    t: " << t << " on obj: " << intersect.second << " (" << intersect.second->getName() << ")" << std::endl; */
+            /* } */
+            /* DebugLogger::ss << "}" << std::endl; */
+            /* DebugLogger::log(); */
+            std::sort(intersections.begin(), intersections.end(), [&r] (const std::pair<Point3d,std::shared_ptr<Object>> & a, const std::pair<Point3d,std::shared_ptr<Object>> & b) -> bool            
+                    {
+                        double ta = (a.first.x()-r.source().x()) / r.direction().vector().x();
+                        double tb = (b.first.x()-r.source().x()) / r.direction().vector().x();
+                        return ta < tb;
+                    });
+            /* DebugLogger::ss << "IntersectionSet AFTER {" << std::endl; */
+            /* for (std::pair<Point3d,std::shared_ptr<Object>> intersect : intersections) */
+            /* { */
+            /*     double t = (intersect.first.x()-r.source().x()) / r.direction().vector().x(); */
+            /*     DebugLogger::ss << "    t: " << t << " on obj: " << intersect.second << std::endl; */
+            /* } */
+            /* DebugLogger::ss << "}" << std::endl; */
+            /* DebugLogger::log(); */
+            auto prevInt = intersections[0];
+            auto currInt = prevInt;
+            bool prevIsSample = false;
+            for (int i = 1; i < intersections.size(); i++)
+            {
+                currInt = intersections[i];
+
+                if(currInt.second != prevInt.second)
+                {
+                    if(!prevIsSample)
+                    {
+                        SamplePoint sp;
+                        sp.pos = prevInt.first;
+                        /* DebugLogger::ss << "SamplePoint: " << sp.pos; */
+                        /* DebugLogger::log(); */
+                        if(otherSamples.size() < otherNum && prevInt.second == other)
+                            otherSamples.push_back(sp);
+                        else if(theseSamples.size() < thisNum && prevInt.second == shared_from_this())
+                            theseSamples.push_back(sp);
+                    }
+                    if(theseSamples.size() >= thisNum && otherSamples.size() >= otherNum) break;
+                    SamplePoint sp;
+                    sp.pos = currInt.first;
+                    /* DebugLogger::ss << "SamplePoint: " << sp.pos; */
+                    /* DebugLogger::log(); */
+                    if(otherSamples.size() < otherNum && currInt.second == other)
+                        otherSamples.push_back(sp);
+                    else if(theseSamples.size() < thisNum && currInt.second == shared_from_this()) 
+                        theseSamples.push_back(sp);
+                    if(theseSamples.size() >= thisNum && otherSamples.size() >= otherNum) break;
+                    prevIsSample = true;
+                } else
+                    prevIsSample = false;
+
+                prevInt = currInt;
+            }
+            /* DebugLogger::ss << "Current sampleAmount: " << samples.size(); */
+            /* DebugLogger::log(); */
+        }
+        else
+        {
+            /* DebugLogger::ss << "No actual intersections!"; */
+            /* DebugLogger::log(); */
+            /* exit(0); */
+        }
+    }
+    appendNonUniformSamples(theseSamples,other);
+    other->appendNonUniformSamples(otherSamples,shared_from_this());
 }

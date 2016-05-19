@@ -1,5 +1,5 @@
 #include "GAOptions.h"
-#include "Configuration.h"
+#include "ConfigurationController.h"
 
 
 #define CONFNM_POPSIZE "GA_PopulationSize"
@@ -29,7 +29,7 @@
 
 GAOptions GAOptions::loadFromConfig()
 {
-    Configuration& config = Configuration::getInstance();
+    const Configuration& config = ConfigurationController::getInstance().getCurrentConfiguration();
     GAOptions options;
     options.setPopulationSize(std::stoi(config.get(CONFNM_POPSIZE)));
     options.setOutputPath(config.get("ExperimentRunPath"));
@@ -116,7 +116,7 @@ void GAOptions::setLogFitness(bool newLogFitness)
 
 void GAOptions::saveToConfig(std::string configName, std::string configValue)
 {
-    Configuration::getInstance().set(configName,configValue);
+    ConfigurationController::getInstance().getCurrentConfiguration().set(configName,configValue);
 }
 
 std::string std::to_string(std::pair<Individual,Individual> &val)
