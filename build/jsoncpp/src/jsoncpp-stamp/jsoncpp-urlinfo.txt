@@ -1,0 +1,3 @@
+repository='external project URL'
+module='https://github.com/open-source-parsers/jsoncpp/archive/0.10.6.zip'
+tag=''
